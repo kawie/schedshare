@@ -29,6 +29,18 @@ defmodule SchedshareWeb.ProfileLive do
           nil
         end
 
+      # Get other users in the same courses
+      other_users_in_course =
+        if schedule_with_bookings do
+          schedule_with_bookings.bookings
+          |> Enum.map(fn booking ->
+            {booking.id, Scheduling.get_users_in_same_course(booking, socket.assigns.current_user.id)}
+          end)
+          |> Map.new()
+        else
+          %{}
+        end
+
       {:ok,
        assign(socket,
          page_title: "Profile - #{user.email}",
@@ -40,7 +52,8 @@ defmodule SchedshareWeb.ProfileLive do
          has_pending_request: has_pending_request,
          is_self: is_self,
          is_admin: is_admin,
-         schedule: schedule_with_bookings
+         schedule: schedule_with_bookings,
+         other_users_in_course: other_users_in_course
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
@@ -62,6 +75,18 @@ defmodule SchedshareWeb.ProfileLive do
           _ -> nil
         end
 
+      # Get other users in the same courses
+      other_users_in_course =
+        if schedule_with_bookings do
+          schedule_with_bookings.bookings
+          |> Enum.map(fn booking ->
+            {booking.id, Scheduling.get_users_in_same_course(booking, socket.assigns.current_user.id)}
+          end)
+          |> Map.new()
+        else
+          %{}
+        end
+
       {:ok,
        assign(socket,
          page_title: "My Profile",
@@ -71,7 +96,8 @@ defmodule SchedshareWeb.ProfileLive do
          pending_requests: pending_requests,
          is_self: true,
          is_admin: is_admin,
-         schedule: schedule_with_bookings
+         schedule: schedule_with_bookings,
+         other_users_in_course: other_users_in_course
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}

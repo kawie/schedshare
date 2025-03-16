@@ -172,6 +172,60 @@
                       </span>
                     <% end %>
                   </div>
+                  <% 
+                    # Get users in the course besides the profile owner
+                    other_users = @other_users_in_course[booking.id] || [] 
+                    
+                    # Check if current user is in the same course as the profile owner
+                    # Look for any of the current user's bookings that match the current booking's course_external_id
+                    current_user_in_course = if @is_self do
+                      false
+                    else
+                      # Get list of current user's bookings' course_external_ids
+                      current_user_courses = Schedshare.Scheduling.list_user_schedules(@current_user.id)
+                      |> Enum.flat_map(fn schedule -> 
+                        Enum.map(schedule.bookings || [], fn b -> 
+                          {b.course_external_id, b.course_title, b.start_datetime_utc}
+                        end)
+                      end)
+                      
+                      # Check if any of the current user's courses match this booking
+                      Enum.any?(current_user_courses, fn
+                        {external_id, _, _} when not is_nil(external_id) and not is_nil(booking.course_external_id) -> 
+                          external_id == booking.course_external_id
+                        {nil, title, start_time} when not is_nil(title) and not is_nil(booking.course_title) -> 
+                          title == booking.course_title && start_time == booking.start_datetime_utc
+                        _ -> false
+                      end)
+                    end
+                    
+                    # Filter users for display
+                    display_users = cond do
+                      @is_self -> other_users
+                      true -> Enum.filter(other_users, fn u -> u.id != @user.id end)
+                    end
+                  %>
+                  <%= if current_user_in_course do %>
+                    <div class="mt-2">
+                      <p class="text-sm text-zinc-600 inline-flex items-center">
+                        <.icon name="hero-face-smile" class="mr-1 h-4 w-4 text-emerald-600" />
+                        You're going together
+                      </p>
+                    </div>
+                  <% end %>
+                  <%= if length(display_users) > 0 do %>
+                    <div class="mt-2">
+                      <p class="text-sm text-zinc-600 inline-flex items-center">
+                        <.icon name="hero-face-smile" class="mr-1 h-4 w-4 text-emerald-600" />
+                        <%= if @is_self do %>Going with:<% else %>Also going with:<% end %>&nbsp;
+                        <%= for {user, index} <- Enum.with_index(display_users) do %>
+                          <.link navigate={~p"/profile/#{user.id}"} class="text-emerald-600 hover:text-emerald-500">
+                            <%= user.email %>
+                          </.link><%= if index < length(display_users) - 1 do %>, <% end %>
+                        <% end %>
+                      </p>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
             </div>
