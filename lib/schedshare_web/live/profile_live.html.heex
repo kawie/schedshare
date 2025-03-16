@@ -117,5 +117,87 @@
         </div>
       </div>
     </div>
+
+    <%= if @schedule || @is_self do %>
+      <div class="mt-8 border-t border-zinc-200 pt-8" data-test-id="schedule-section">
+        <h2 class="text-lg font-semibold text-zinc-900">Schedule</h2>
+        <%= if @schedule do %>
+          <%= if @schedule.bookings && length(@schedule.bookings) > 0 do %>
+            <div class="mt-4 divide-y divide-zinc-200" data-test-id="booking-list">
+              <%= for booking <- Enum.sort_by(@schedule.bookings, & &1.start_datetime_utc) do %>
+                <div class="py-6">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-base font-semibold text-zinc-900">
+                        <%= booking.course_title %>
+                      </h3>
+                      <p class="mt-1 text-sm text-zinc-500">
+                        with <%= booking.teacher_name %>
+                      </p>
+                    </div>
+                    <span class={[
+                      "rounded-full px-2 py-1 text-xs font-medium",
+                      booking.status == "CANCELLED" && "bg-red-100 text-red-800",
+                      booking.status != "CANCELLED" && "bg-emerald-100 text-emerald-800"
+                    ]} data-test-id={"status-#{String.downcase(booking.status)}"}>
+                      <%= booking.status %>
+                    </span>
+                  </div>
+                  <div class="mt-2 text-sm text-zinc-500">
+                    <p>
+                      <%= Calendar.strftime(booking.start_datetime_utc, "%A, %B %d, %Y") %>
+                    </p>
+                    <p>
+                      <%= Calendar.strftime(booking.start_datetime_utc, "%H:%M") %> - 
+                      <%= Calendar.strftime(booking.end_datetime_utc, "%H:%M") %>
+                    </p>
+                  </div>
+                  <div class="mt-2">
+                    <p class="text-sm text-zinc-500">
+                      <%= booking.venue_name %>
+                    </p>
+                    <p class="text-sm text-zinc-500">
+                      <%= booking.venue_full_address %>
+                    </p>
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <%= for type <- booking.course_types || [] do %>
+                      <span class="rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">
+                        <%= type %>
+                      </span>
+                    <% end %>
+                    <%= if booking.is_online do %>
+                      <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                        Online
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="mt-4 text-sm text-zinc-500">No bookings yet.</p>
+          <% end %>
+        <% else %>
+          <%= if @is_self do %>
+            <div class="mt-4 rounded-md bg-yellow-50 p-4" data-test-id="no-schedule-warning">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-yellow-800">No Schedule Found</h3>
+                  <p class="mt-2 text-sm text-yellow-700">
+                    Your schedule will be created automatically when you connect your account.
+                  </p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div> 

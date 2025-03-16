@@ -1,6 +1,7 @@
 defmodule SchedshareWeb.ProfileLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Accounts
+  alias Schedshare.Scheduling
 
   def mount(%{"id" => user_id}, _session, socket) do
     if socket.assigns[:current_user] do
@@ -17,6 +18,17 @@ defmodule SchedshareWeb.ProfileLive do
       is_self = socket.assigns.current_user.id == user.id
       is_admin = Accounts.is_admin?(socket.assigns.current_user)
 
+      # Load schedule and bookings if user is self or an approved follower
+      schedule_with_bookings =
+        if is_self || is_following do
+          case Scheduling.list_user_schedules(user.id) do
+            [schedule] -> schedule
+            _ -> nil
+          end
+        else
+          nil
+        end
+
       {:ok,
        assign(socket,
          page_title: "Profile - #{user.email}",
@@ -27,7 +39,8 @@ defmodule SchedshareWeb.ProfileLive do
          is_following: is_following,
          has_pending_request: has_pending_request,
          is_self: is_self,
-         is_admin: is_admin
+         is_admin: is_admin,
+         schedule: schedule_with_bookings
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
@@ -42,6 +55,13 @@ defmodule SchedshareWeb.ProfileLive do
       pending_requests = Accounts.get_pending_follow_requests(user.id)
       is_admin = Accounts.is_admin?(socket.assigns.current_user)
 
+      # Load own schedule and bookings
+      schedule_with_bookings =
+        case Scheduling.list_user_schedules(user.id) do
+          [schedule] -> schedule
+          _ -> nil
+        end
+
       {:ok,
        assign(socket,
          page_title: "My Profile",
@@ -50,7 +70,8 @@ defmodule SchedshareWeb.ProfileLive do
          following: following,
          pending_requests: pending_requests,
          is_self: true,
-         is_admin: is_admin
+         is_admin: is_admin,
+         schedule: schedule_with_bookings
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
