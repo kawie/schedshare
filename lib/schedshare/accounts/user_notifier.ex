@@ -8,7 +8,7 @@ defmodule Schedshare.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Schedshare", "contact@example.com"})
+      |> from({"Schedshare", "boingo@schedshare.de"})
       |> subject(subject)
       |> text_body(body)
 

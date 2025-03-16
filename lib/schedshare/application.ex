@@ -38,7 +38,7 @@ defmodule Schedshare.Application do
   end
 
   defp skip_migrations?() do
-    # By default, sqlite migrations are run when using a release
-    System.get_env("RELEASE_NAME") != nil
+    # Always run migrations on startup for SQLite
+    false
   end
 end
