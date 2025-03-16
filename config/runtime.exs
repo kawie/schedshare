@@ -32,6 +32,14 @@ if config_env() == :prod do
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
 
+  # Configure Swoosh for production
+  config :schedshare, Schedshare.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: System.get_env("RESEND_API_KEY") || raise("RESEND_API_KEY is missing")
+
+  # Configure Swoosh API client
+  config :swoosh, :api_client, Swoosh.ApiClient.Finch
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
