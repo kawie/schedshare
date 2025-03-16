@@ -98,20 +98,22 @@ defmodule SchedshareWeb.IndexLive do
                 <%= if Accounts.is_admin?(@current_user) do %>
                   <div class="mt-6 border-t border-zinc-200 pt-6">
                     <h3 class="text-lg font-semibold text-zinc-900">Admin Tools</h3>
-                    <div class="mt-4 flex flex-col gap-3">
-                      <.link
-                        navigate="/dev/dashboard"
-                        class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                      >
-                        LiveDashboard →
-                      </.link>
-                      <.link
-                        navigate="/dev/mailbox"
-                        class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                      >
-                        Email Preview →
-                      </.link>
-                    </div>
+                    <%= if Application.get_env(:schedshare, :dev_routes) do %>
+                      <div class="mt-4 flex flex-col gap-3">
+                        <.link
+                          navigate="/dev/dashboard"
+                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                        >
+                          LiveDashboard →
+                        </.link>
+                        <.link
+                          navigate="/dev/mailbox"
+                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                        >
+                          Email Preview →
+                        </.link>
+                      </div>
+                    <% end %>
 
                     <div class="mt-8">
                       <h3 class="text-lg font-semibold text-zinc-900">Users</h3>
