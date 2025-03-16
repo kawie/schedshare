@@ -1,17 +1,26 @@
 <div class="mx-auto max-w-2xl py-16 px-4 sm:px-6 lg:px-8">
   <div class="space-y-8">
     <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-zinc-900">
-          <%= if @is_self do %>
-            My Profile
-          <% else %>
-            <%= @user.email %>'s Profile
-          <% end %>
-        </h1>
-        <p class="mt-1 text-sm text-zinc-500">
-          Joined <%= Calendar.strftime(@user.inserted_at, "%B %d, %Y") %>
-        </p>
+      <div class="flex items-center gap-4">
+        <%= if @user.profile_picture do %>
+          <img src={@user.profile_picture} alt={@user.name || @user.email} class="h-16 w-16 rounded-full" />
+        <% else %>
+          <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+            <.icon name="hero-user" class="w-8 h-8 text-gray-500" />
+          </div>
+        <% end %>
+        <div>
+          <h1 class="text-2xl font-bold text-zinc-900">
+            <%= if @is_self do %>
+              My Profile
+            <% else %>
+              <%= @user.name || @user.email %>
+            <% end %>
+          </h1>
+          <p class="mt-1 text-sm text-zinc-500">
+            <%= @user.email %> · Joined <%= Calendar.strftime(@user.inserted_at, "%B %d, %Y") %>
+          </p>
+        </div>
       </div>
 
       <%= if not @is_self do %>
@@ -96,8 +105,20 @@
         <div class="mt-4 divide-y divide-zinc-200">
           <%= for follow <- @following do %>
             <div class="py-3">
-              <.link navigate={~p"/profile/#{follow.followed.id}"} class="text-sm text-zinc-900 hover:text-zinc-600">
-                <%= follow.followed.email %>
+              <.link navigate={~p"/profile/#{follow.followed.id}"} class="flex items-center gap-3 text-sm text-zinc-900 hover:text-zinc-600">
+                <%= if follow.followed.profile_picture do %>
+                  <img src={follow.followed.profile_picture} alt={follow.followed.name || follow.followed.email} class="h-8 w-8 rounded-full" />
+                <% else %>
+                  <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                  </div>
+                <% end %>
+                <div>
+                  <div><%= follow.followed.name || follow.followed.email %></div>
+                  <%= if follow.followed.name do %>
+                    <div class="text-xs text-zinc-500"><%= follow.followed.email %></div>
+                  <% end %>
+                </div>
               </.link>
             </div>
           <% end %>
@@ -109,8 +130,20 @@
         <div class="mt-4 divide-y divide-zinc-200">
           <%= for follow <- @followers do %>
             <div class="py-3">
-              <.link navigate={~p"/profile/#{follow.follower.id}"} class="text-sm text-zinc-900 hover:text-zinc-600">
-                <%= follow.follower.email %>
+              <.link navigate={~p"/profile/#{follow.follower.id}"} class="flex items-center gap-3 text-sm text-zinc-900 hover:text-zinc-600">
+                <%= if follow.follower.profile_picture do %>
+                  <img src={follow.follower.profile_picture} alt={follow.follower.name || follow.follower.email} class="h-8 w-8 rounded-full" />
+                <% else %>
+                  <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                  </div>
+                <% end %>
+                <div>
+                  <div><%= follow.follower.name || follow.follower.email %></div>
+                  <%= if follow.follower.name do %>
+                    <div class="text-xs text-zinc-500"><%= follow.follower.email %></div>
+                  <% end %>
+                </div>
               </.link>
             </div>
           <% end %>
@@ -215,14 +248,30 @@
                   <% end %>
                   <%= if length(display_users) > 0 do %>
                     <div class="mt-2">
-                      <p class="text-sm text-zinc-600 inline-flex items-center">
-                        <.icon name="hero-face-smile" class="mr-1 h-4 w-4 text-emerald-600" />
-                        <%= if @is_self do %>Going with:<% else %>Also going with:<% end %>&nbsp;
-                        <%= for {user, index} <- Enum.with_index(display_users) do %>
-                          <.link navigate={~p"/profile/#{user.id}"} class="text-emerald-600 hover:text-emerald-500">
-                            <%= user.email %>
-                          </.link><%= if index < length(display_users) - 1 do %>, <% end %>
-                        <% end %>
+                      <p class="text-sm text-zinc-600">
+                        <span class="flex items-center gap-2">
+                          <.icon name="hero-face-smile" class="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                          <span><%= if @is_self do %>Going with:<% else %>Also going with:<% end %></span>
+                        </span>
+                        <div class="mt-2 flex flex-col gap-2">
+                          <%= for user <- display_users do %>
+                            <.link navigate={~p"/profile/#{user.id}"} class="flex items-center gap-3 text-emerald-600 hover:text-emerald-500">
+                              <%= if user.profile_picture do %>
+                                <img src={user.profile_picture} alt={user.name || user.email} class="h-8 w-8 rounded-full" />
+                              <% else %>
+                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                                </div>
+                              <% end %>
+                              <div>
+                                <div><%= user.name || user.email %></div>
+                                <%= if user.name do %>
+                                  <div class="text-xs text-zinc-500"><%= user.email %></div>
+                                <% end %>
+                              </div>
+                            </.link>
+                          <% end %>
+                        </div>
                       </p>
                     </div>
                   <% end %>

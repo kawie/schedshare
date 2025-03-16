@@ -9,6 +9,8 @@ defmodule Schedshare.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
     field :is_admin, :boolean, default: false
+    field :name, :string
+    field :profile_picture, :string  # This will store the base64 image data
 
     # Follow relationships
     has_many :following, Schedshare.Accounts.Follow, foreign_key: :follower_id
@@ -42,10 +44,71 @@ defmodule Schedshare.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password])
+    |> cast(attrs, [:email, :password, :name, :profile_picture])
     |> validate_email(opts)
     |> validate_password(opts)
+    |> validate_name()
+    |> maybe_process_profile_picture()
   end
+
+  @doc """
+  A changeset for updating the user's profile.
+  """
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :profile_picture])
+    |> validate_name()
+    |> maybe_process_profile_picture()
+  end
+
+  defp validate_name(changeset) do
+    changeset
+    |> validate_length(:name, min: 2, max: 50, message: "must be between 2 and 50 characters long")
+  end
+
+  defp maybe_process_profile_picture(changeset) do
+    if upload = get_change(changeset, :profile_picture) do
+      case process_profile_picture(upload) do
+        {:ok, base64_data} ->
+          put_change(changeset, :profile_picture, base64_data)
+        :error ->
+          add_error(changeset, :profile_picture, "invalid image format")
+      end
+    else
+      changeset
+    end
+  end
+
+  defp process_profile_picture(%{content_type: content_type, path: path}) when content_type in ["image/jpeg", "image/png", "image/gif"] do
+    try do
+      # Create a temporary file with the correct extension
+      ext = content_type |> String.split("/") |> List.last()
+      tmp_path = Path.join(System.tmp_dir!(), "#{:crypto.strong_rand_bytes(16) |> Base.encode16()}.#{ext}")
+      File.write!(tmp_path, path)
+
+      # Process the image with Mogrify
+      result =
+        tmp_path
+        |> Mogrify.open()
+        |> Mogrify.resize_to_limit("200x200")
+        |> Mogrify.save(in_place: true)
+
+      # Read the processed image and convert to base64
+      processed_binary = File.read!(result.path)
+      base64_data = "data:#{content_type};base64," <> Base.encode64(processed_binary)
+
+      # Clean up temporary file
+      File.rm!(tmp_path)
+
+      {:ok, base64_data}
+    rescue
+      e ->
+        require Logger
+        Logger.error("Error processing profile picture: #{inspect(e)}")
+        :error
+    end
+  end
+  defp process_profile_picture(_), do: :error
 
   defp validate_email(changeset, opts) do
     changeset
@@ -155,8 +218,6 @@ defmodule Schedshare.Accounts.User do
   Validates the current password otherwise adds an error to the changeset.
   """
   def validate_current_password(changeset, password) do
-    changeset = cast(changeset, %{current_password: password}, [:current_password])
-
     if valid_password?(changeset.data, password) do
       changeset
     else

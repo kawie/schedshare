@@ -59,94 +59,111 @@ defmodule SchedshareWeb.IndexLive do
           <%= if @current_user do %>
             <div class="mt-10">
               <h2 class="text-2xl font-semibold text-zinc-900">
-                Welcome back, <%= @current_user.email %>!
+                Welcome back, <%= @current_user.name || @current_user.email %>!
               </h2>
-
-              <%= if length(@pending_requests) > 0 do %>
-                <div class="mt-6 border-t border-zinc-200 pt-6">
-                  <h3 class="text-lg font-semibold text-zinc-900">Pending Follow Requests</h3>
-                  <div class="mt-4 divide-y divide-zinc-200">
-                    <%= for request <- @pending_requests do %>
-                      <div class="flex items-center justify-between py-4">
-                        <div class="flex items-center">
-                          <.link navigate={~p"/profile/#{request.follower.id}"} class="text-sm text-zinc-900 hover:text-zinc-700">
-                            <%= request.follower.email %>
-                          </.link>
-                        </div>
-                        <div class="flex space-x-2">
-                          <button phx-click="approve_request" phx-value-id={request.id} class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500">
-                            Approve
-                          </button>
-                          <button phx-click="reject_request" phx-value-id={request.id} class="rounded-md bg-zinc-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-zinc-500">
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
 
               <div class="mt-4 flex flex-col gap-4">
                 <.link
-                  navigate="/users/settings"
-                  class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  navigate={~p"/profile"}
+                  class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
                 >
-                  Settings →
+                  View my schedule →
                 </.link>
 
-                <%= if Accounts.is_admin?(@current_user) do %>
+                <%= if length(@pending_requests) > 0 do %>
                   <div class="mt-6 border-t border-zinc-200 pt-6">
-                    <h3 class="text-lg font-semibold text-zinc-900">Admin Tools</h3>
-                    <%= if Application.get_env(:schedshare, :dev_routes) do %>
-                      <div class="mt-4 flex flex-col gap-3">
-                        <.link
-                          navigate="/dev/dashboard"
-                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                        >
-                          LiveDashboard →
-                        </.link>
-                        <.link
-                          navigate="/dev/mailbox"
-                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                        >
-                          Email Preview →
-                        </.link>
-                      </div>
-                    <% end %>
-
-                    <div class="mt-8">
-                      <h3 class="text-lg font-semibold text-zinc-900">Users</h3>
-                      <div class="mt-4 divide-y divide-zinc-200">
-                        <%= for user <- @users do %>
-                          <div class="flex items-center justify-between py-3">
-                            <div class="flex items-center">
-                              <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
-                                <%= user.email %>
-                              </.link>
-                              <%= if user.is_admin do %>
-                                <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                                  Admin
-                                </span>
-                              <% end %>
-                            </div>
-                            <span class="text-xs text-zinc-500">
-                              Joined <%= Calendar.strftime(user.inserted_at, "%Y-%m-%d") %>
-                            </span>
+                    <h3 class="text-lg font-semibold text-zinc-900">Pending Follow Requests</h3>
+                    <div class="mt-4 divide-y divide-zinc-200">
+                      <%= for request <- @pending_requests do %>
+                        <div class="flex items-center justify-between py-3">
+                          <div class="flex items-center">
+                            <.link navigate={~p"/profile/#{request.follower.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
+                              <%= request.follower.email %>
+                            </.link>
                           </div>
-                        <% end %>
-                      </div>
+                          <div class="flex items-center gap-3">
+                            <button
+                              phx-click="approve_request"
+                              phx-value-id={request.id}
+                              class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              phx-click="reject_request"
+                              phx-value-id={request.id}
+                              class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      <% end %>
                     </div>
                   </div>
                 <% end %>
 
-                <.link
-                  href="/users/log_out"
-                  method="delete"
-                  class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-                >
-                  Log out →
-                </.link>
+                <div class="mt-4 flex flex-col gap-4">
+                  <.link
+                    navigate="/users/settings"
+                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  >
+                    Settings →
+                  </.link>
+
+                  <%= if Accounts.is_admin?(@current_user) do %>
+                    <div class="mt-6 border-t border-zinc-200 pt-6">
+                      <h3 class="text-lg font-semibold text-zinc-900">Admin Tools</h3>
+                      <%= if Application.get_env(:schedshare, :dev_routes) do %>
+                        <div class="mt-4 flex flex-col gap-3">
+                          <.link
+                            navigate="/dev/dashboard"
+                            class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                          >
+                            LiveDashboard →
+                          </.link>
+                          <.link
+                            navigate="/dev/mailbox"
+                            class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                          >
+                            Email Preview →
+                          </.link>
+                        </div>
+                      <% end %>
+
+                      <div class="mt-8">
+                        <h3 class="text-lg font-semibold text-zinc-900">Users</h3>
+                        <div class="mt-4 divide-y divide-zinc-200">
+                          <%= for user <- @users do %>
+                            <div class="flex items-center justify-between py-3">
+                              <div class="flex items-center">
+                                <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
+                                  <%= user.email %>
+                                </.link>
+                                <%= if user.is_admin do %>
+                                  <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                                    Admin
+                                  </span>
+                                <% end %>
+                              </div>
+                              <span class="text-xs text-zinc-500">
+                                Joined <%= Calendar.strftime(user.inserted_at, "%Y-%m-%d") %>
+                              </span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <.link
+                    href="/users/log_out"
+                    method="delete"
+                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  >
+                    Log out →
+                  </.link>
+                </div>
               </div>
             </div>
           <% else %>
