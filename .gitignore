@@ -48,3 +48,4 @@ npm-debug.log
 .cursor/
 cursorrules.json
 
+.DS_Store
