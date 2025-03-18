@@ -8,6 +8,7 @@ defmodule Schedshare.Scheduling do
 
   alias Schedshare.Scheduling.Schedule
   alias Schedshare.Scheduling.Booking
+  alias Schedshare.Scheduling.ApiCredential
 
   @doc """
   Returns the list of schedules for a user.
@@ -143,5 +144,117 @@ defmodule Schedshare.Scheduling do
     booking
     |> get_matching_bookings(current_user_id)
     |> Enum.map(& &1.schedule.user)
+  end
+
+  @doc """
+  Gets the API credential for a user.
+  """
+  def get_user_api_credential(user_id) do
+    ApiCredential
+    |> where([c], c.user_id == ^user_id)
+    |> Repo.one()
+  end
+
+  @doc """
+  Creates or updates an API credential for a user.
+  """
+  def create_or_update_api_credential(user_id, attrs) do
+    case get_user_api_credential(user_id) do
+      nil ->
+        %ApiCredential{user_id: user_id}
+        |> ApiCredential.changeset(attrs)
+        |> Repo.insert()
+
+      credential ->
+        credential
+        |> ApiCredential.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Updates an API credential.
+  """
+  def update_api_credential(%ApiCredential{} = credential, attrs) do
+    credential
+    |> ApiCredential.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking API credential changes.
+  """
+  def change_api_credential(%ApiCredential{} = credential, attrs \\ %{}) do
+    ApiCredential.changeset(credential, attrs)
+  end
+
+  @doc """
+  Syncs bookings from the API response.
+  Updates existing bookings if they have the same external_id, creates new ones if they don't exist.
+  Marks bookings as DELETED if they're no longer returned by the API.
+  """
+  def sync_bookings(user_id, bookings) do
+    # Get or create schedule for user
+    schedule =
+      case list_user_schedules(user_id) do
+        [schedule] -> schedule
+        _ -> {:ok, schedule} = create_schedule(%{user_id: user_id})
+             schedule
+      end
+
+    # Get existing bookings by external_id for this schedule
+    existing_bookings =
+      Booking
+      |> where([b], b.schedule_id == ^schedule.id)
+      |> Repo.all()
+      |> Map.new(&{&1.external_id, &1})
+
+    # Get list of external_ids from API response
+    api_external_ids = Enum.map(bookings, & &1["id"]) |> MapSet.new()
+
+    # Mark bookings as DELETED if they're not in the API response
+    existing_bookings
+    |> Enum.filter(fn {external_id, _} -> not MapSet.member?(api_external_ids, external_id) end)
+    |> Enum.each(fn {_, booking} ->
+      update_booking(booking, %{status: "DELETED"})
+    end)
+
+    # Convert API bookings to our format and sync them
+    bookings
+    |> Enum.map(fn booking ->
+      {:ok, start_datetime, _} = DateTime.from_iso8601(booking["start_time"])
+      {:ok, end_datetime, _} = DateTime.from_iso8601(booking["end_time"])
+
+      %{
+        schedule_id: schedule.id,
+        external_id: booking["id"],
+        course_external_id: booking["course_external_id"],
+        status: booking["status"],
+        course_title: booking["title"],
+        start_datetime_utc: start_datetime,
+        end_datetime_utc: end_datetime,
+        venue_name: booking["location"],
+        teacher_name: booking["teacher_name"],
+        course_types: booking["course_types"] || [],
+        is_online: booking["is_online"] || false
+      }
+    end)
+    |> Enum.reduce_while({:ok, []}, fn booking_attrs, {:ok, acc} ->
+      case Map.get(existing_bookings, booking_attrs.external_id) do
+        nil ->
+          # Create new booking if it doesn't exist
+          case create_booking(booking_attrs) do
+            {:ok, booking} -> {:cont, {:ok, [booking | acc]}}
+            {:error, _} -> {:halt, {:error, "Failed to create booking"}}
+          end
+
+        existing_booking ->
+          # Update existing booking
+          case update_booking(existing_booking, booking_attrs) do
+            {:ok, booking} -> {:cont, {:ok, [booking | acc]}}
+            {:error, _} -> {:halt, {:error, "Failed to update booking"}}
+          end
+      end
+    end)
   end
 end

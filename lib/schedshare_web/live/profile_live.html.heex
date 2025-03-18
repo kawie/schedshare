@@ -184,6 +184,9 @@
                       <%= Calendar.strftime(booking.start_datetime_utc, "%H:%M") %> - 
                       <%= Calendar.strftime(booking.end_datetime_utc, "%H:%M") %>
                     </p>
+                    <p class="text-xs text-zinc-400">
+                      ID: <%= booking.external_id %>
+                    </p>
                   </div>
                   <div class="mt-2">
                     <p class="text-sm text-zinc-500">

@@ -2,6 +2,7 @@ defmodule SchedshareWeb.ProfileLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Accounts
   alias Schedshare.Scheduling
+  alias Schedshare.Scheduling.ApiCredential
 
   def mount(%{"id" => user_id}, _session, socket) do
     if socket.assigns[:current_user] do
@@ -22,7 +23,9 @@ defmodule SchedshareWeb.ProfileLive do
       schedule_with_bookings =
         if is_self || is_following do
           case Scheduling.list_user_schedules(user.id) do
-            [schedule] -> schedule
+            [schedule] ->
+              # Filter out deleted bookings
+              %{schedule | bookings: Enum.reject(schedule.bookings, &(&1.status == "DELETED"))}
             _ -> nil
           end
         else
@@ -41,6 +44,11 @@ defmodule SchedshareWeb.ProfileLive do
           %{}
         end
 
+      # Load API credentials if user is self
+      api_credential = if is_self, do: Scheduling.get_user_api_credential(user.id), else: nil
+      api_credential_changeset = if is_self, do: Scheduling.change_api_credential(api_credential || %ApiCredential{}), else: nil
+      has_credentials = if is_self, do: not is_nil(api_credential), else: false
+
       {:ok,
        assign(socket,
          page_title: "Profile - #{user.email}",
@@ -53,7 +61,10 @@ defmodule SchedshareWeb.ProfileLive do
          is_self: is_self,
          is_admin: is_admin,
          schedule: schedule_with_bookings,
-         other_users_in_course: other_users_in_course
+         other_users_in_course: other_users_in_course,
+         api_credential: api_credential,
+         api_credential_changeset: api_credential_changeset,
+         has_credentials: has_credentials
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
@@ -71,7 +82,9 @@ defmodule SchedshareWeb.ProfileLive do
       # Load own schedule and bookings
       schedule_with_bookings =
         case Scheduling.list_user_schedules(user.id) do
-          [schedule] -> schedule
+          [schedule] ->
+            # Filter out deleted bookings
+            %{schedule | bookings: Enum.reject(schedule.bookings, &(&1.status == "DELETED"))}
           _ -> nil
         end
 
@@ -87,6 +100,11 @@ defmodule SchedshareWeb.ProfileLive do
           %{}
         end
 
+      # Load API credentials
+      api_credential = Scheduling.get_user_api_credential(user.id)
+      api_credential_changeset = Scheduling.change_api_credential(api_credential || %ApiCredential{})
+      has_credentials = not is_nil(api_credential)
+
       {:ok,
        assign(socket,
          page_title: "My Profile",
@@ -97,7 +115,10 @@ defmodule SchedshareWeb.ProfileLive do
          is_self: true,
          is_admin: is_admin,
          schedule: schedule_with_bookings,
-         other_users_in_course: other_users_in_course
+         other_users_in_course: other_users_in_course,
+         api_credential: api_credential,
+         api_credential_changeset: api_credential_changeset,
+         has_credentials: has_credentials
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}

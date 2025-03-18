@@ -2,6 +2,8 @@ defmodule SchedshareWeb.UserSettingsLive do
   use SchedshareWeb, :live_view
 
   alias Schedshare.Accounts
+  alias Schedshare.Scheduling
+  alias Schedshare.Scheduling.{ApiCredential, HTTPClient}
 
   def render(assigns) do
     ~H"""
@@ -67,6 +69,56 @@ defmodule SchedshareWeb.UserSettingsLive do
               <.button phx-disable-with="Saving...">Save Profile</.button>
             </:actions>
           </.simple_form>
+        </div>
+      </div>
+
+      <div class="mt-10">
+        <.header>
+          API Credentials
+          <:subtitle>Connect your account to schedule providers</:subtitle>
+        </.header>
+
+        <div class="mt-6">
+          <.form :let={f} for={@api_credential_changeset} phx-submit="save_credentials" class="space-y-4">
+            <div>
+              <.input field={f[:username]} type="text" label="Username" />
+            </div>
+            <div>
+              <.input field={f[:password]} type="password" label="Password" />
+            </div>
+            <div class="flex items-center gap-4">
+              <.button type="submit">Save Credentials</.button>
+              <.button type="button" phx-click="test_connection" disabled={!@has_credentials}>
+                Test Connection
+              </.button>
+              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials}>
+                <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
+              </.button>
+            </div>
+          </.form>
+
+          <%= if @api_credential do %>
+            <div class="mt-4">
+              <div class="flex items-center gap-2">
+                <span class={[
+                  "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+                  @api_credential.connection_status == "connected" && "bg-emerald-100 text-emerald-800",
+                  @api_credential.connection_status == "error" && "bg-red-100 text-red-800",
+                  @api_credential.connection_status == "disconnected" && "bg-yellow-100 text-yellow-800"
+                ]}>
+                  <%= @api_credential.connection_status %>
+                </span>
+                <%= if @api_credential.last_sync_at do %>
+                  <span class="text-sm text-zinc-500">
+                    Last synced <%= Calendar.strftime(@api_credential.last_sync_at, "%B %d, %Y at %H:%M") %>
+                  </span>
+                <% end %>
+              </div>
+              <%= if @api_credential.connection_error do %>
+                <p class="mt-2 text-sm text-red-600"><%= @api_credential.connection_error %></p>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </div>
 
@@ -161,6 +213,11 @@ defmodule SchedshareWeb.UserSettingsLive do
     password_changeset = Accounts.change_user_password(user)
     profile_changeset = Accounts.change_user_profile(user)
 
+    # Load API credentials
+    api_credential = Scheduling.get_user_api_credential(user.id)
+    api_credential_changeset = Scheduling.change_api_credential(api_credential || %ApiCredential{})
+    has_credentials = not is_nil(api_credential)
+
     socket =
       socket
       |> assign(:current_password, nil)
@@ -169,6 +226,9 @@ defmodule SchedshareWeb.UserSettingsLive do
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:profile_form, to_form(profile_changeset))
+      |> assign(:api_credential, api_credential)
+      |> assign(:api_credential_changeset, api_credential_changeset)
+      |> assign(:has_credentials, has_credentials)
       |> assign(:trigger_submit, false)
       |> allow_upload(:profile_picture,
         accept: ~w(.jpg .jpeg .png .gif),
@@ -177,6 +237,61 @@ defmodule SchedshareWeb.UserSettingsLive do
       )
 
     {:ok, socket}
+  end
+
+  def handle_event("save_credentials", %{"api_credential" => credential_params}, socket) do
+    case Scheduling.create_or_update_api_credential(socket.assigns.current_user.id, credential_params) do
+      {:ok, credential} ->
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: credential,
+           api_credential_changeset: Scheduling.change_api_credential(credential),
+           has_credentials: true
+         )
+         |> put_flash(:info, "API credentials saved successfully")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply,
+         socket
+         |> assign(api_credential_changeset: changeset)
+         |> put_flash(:error, "Failed to save API credentials")}
+    end
+  end
+
+  def handle_event("test_connection", _, socket) do
+    case HTTPClient.authenticate(socket.assigns.api_credential.username, socket.assigns.api_credential.password) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: %{socket.assigns.api_credential | connection_status: "connected", connection_error: nil}
+         )
+         |> put_flash(:info, "Connection successful!")}
+
+      {:error, error} ->
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: %{socket.assigns.api_credential | connection_status: "error", connection_error: error}
+         )
+         |> put_flash(:error, "Connection failed: #{error}")}
+    end
+  end
+
+  def handle_event("sync_schedule", _, socket) do
+    case Schedshare.Scheduling.Sync.sync_user_schedule(socket.assigns.current_user.id) do
+      {:ok, updated_credential} ->
+        {:noreply,
+         socket
+         |> assign(api_credential: updated_credential)
+         |> put_flash(:info, "Schedule synced successfully!")}
+
+      {:error, error} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to sync schedule: #{error}")}
+    end
   end
 
   def handle_event("validate_profile", params, socket) do

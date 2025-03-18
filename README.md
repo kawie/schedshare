@@ -48,6 +48,19 @@ mix phx.server
 ```
 Access the app at: `http://localhost:4000`
 
+### Environment Variables
+Create a `.env` file in the project root with the following variables:
+
+```sh
+# API Configuration
+API_BASE_URL=https://api.example.com  # Base URL for the sports platform API
+API_CLIENT_ID=your_client_id          # Client ID for API authentication
+API_CLIENT_SECRET=your_client_secret  # Client secret for API authentication
+
+# Development Mode
+ENV=dev  # Set to 'dev' for development, 'test' for testing, or 'prod' for production
+```
+
 ## Deployment (Fly.io)
 To deploy to Fly.io:
 1. Install Fly CLI:  
