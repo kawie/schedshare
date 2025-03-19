@@ -4,8 +4,7 @@ defmodule Schedshare.Scheduling.HTTPClient do
 
   plug Tesla.Middleware.BaseUrl, System.get_env("API_BASE_URL")
   plug Tesla.Middleware.Headers, [
-    {"user-agent", "schedshare"},
-    {"device-name", "schedshare"}
+    {"user-agent", "schedshare"}
   ]
   plug Tesla.Middleware.JSON
 
@@ -33,9 +32,8 @@ defmodule Schedshare.Scheduling.HTTPClient do
         grant_type: "password",
         username: username,
         password: password,
-        client_id: Application.get_env(:schedshare, :api_client_id),
-        client_secret: Application.get_env(:schedshare, :api_client_secret),
-        scope: "read write"
+        client_id: System.get_env("API_CLIENT_ID"),
+        client_secret: System.get_env("API_CLIENT_SECRET")
       })
     end
   end
@@ -55,8 +53,8 @@ defmodule Schedshare.Scheduling.HTTPClient do
       post("/api/v7/auth/token", %{
         grant_type: "refresh_token",
         refresh_token: refresh_token,
-        client_id: Application.get_env(:schedshare, :api_client_id),
-        client_secret: Application.get_env(:schedshare, :api_client_secret)
+        client_id: System.get_env("API_CLIENT_ID"),
+        client_secret: System.get_env("API_CLIENT_SECRET")
       })
     end
   end
