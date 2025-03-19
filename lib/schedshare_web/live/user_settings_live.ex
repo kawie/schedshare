@@ -240,28 +240,58 @@ defmodule SchedshareWeb.UserSettingsLive do
   end
 
   def handle_event("save_credentials", %{"api_credential" => credential_params}, socket) do
-    case Scheduling.create_or_update_api_credential(socket.assigns.current_user.id, credential_params) do
-      {:ok, credential} ->
-        {:noreply,
-         socket
-         |> assign(
-           api_credential: credential,
-           api_credential_changeset: Scheduling.change_api_credential(credential),
-           has_credentials: true
-         )
-         |> put_flash(:info, "API credentials saved successfully")}
+    case HTTPClient.authenticate(credential_params["username"], credential_params["password"]) do
+      {:ok, %Tesla.Env{status: 200, body: %{"data" => %{"access_token" => access_token, "refresh_token" => refresh_token, "expires_in" => expires_in}}}} ->
+        # Calculate token expiry time
+        expires_at = DateTime.add(DateTime.utc_now(), expires_in, :second)
 
-      {:error, %Ecto.Changeset{} = changeset} ->
+        # Add tokens and expiry to params
+        credential_params = Map.merge(credential_params, %{
+          "access_token" => access_token,
+          "refresh_token" => refresh_token,
+          "token_expires_at" => expires_at,
+          "connection_status" => "connected",
+          "connection_error" => nil
+        })
+
+        case Scheduling.create_or_update_api_credential(socket.assigns.current_user.id, credential_params) do
+          {:ok, credential} ->
+            {:noreply,
+             socket
+             |> assign(
+               api_credential: credential,
+               api_credential_changeset: Scheduling.change_api_credential(credential),
+               has_credentials: true
+             )
+             |> put_flash(:info, "API credentials saved successfully")}
+
+          {:error, %Ecto.Changeset{} = changeset} ->
+            {:noreply,
+             socket
+             |> assign(api_credential_changeset: changeset)
+             |> put_flash(:error, "Failed to save API credentials")}
+        end
+
+      {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
         {:noreply,
          socket
-         |> assign(api_credential_changeset: changeset)
-         |> put_flash(:error, "Failed to save API credentials")}
+         |> put_flash(:error, "Authentication failed: #{error}")}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Authentication failed with status #{status}")}
+
+      {:error, _error} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to connect to API")}
     end
   end
 
   def handle_event("test_connection", _, socket) do
-    case HTTPClient.authenticate(socket.assigns.api_credential.username, socket.assigns.api_credential.password) do
-      {:ok, _} ->
+    case HTTPClient.get_customer_info(socket.assigns.api_credential.access_token) do
+      {:ok, %Tesla.Env{status: 200, body: %{"data" => _customer_data}}} ->
         {:noreply,
          socket
          |> assign(
@@ -269,13 +299,31 @@ defmodule SchedshareWeb.UserSettingsLive do
          )
          |> put_flash(:info, "Connection successful!")}
 
-      {:error, error} ->
+      {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
         {:noreply,
          socket
          |> assign(
            api_credential: %{socket.assigns.api_credential | connection_status: "error", connection_error: error}
          )
          |> put_flash(:error, "Connection failed: #{error}")}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        error_message = "Connection failed with status #{status}"
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: %{socket.assigns.api_credential | connection_status: "error", connection_error: error_message}
+         )
+         |> put_flash(:error, error_message)}
+
+      {:error, _error} ->
+        error_message = "Failed to connect to API"
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: %{socket.assigns.api_credential | connection_status: "error", connection_error: error_message}
+         )
+         |> put_flash(:error, error_message)}
     end
   end
 

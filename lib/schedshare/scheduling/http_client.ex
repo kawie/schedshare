@@ -29,7 +29,7 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_authenticate(username, password)
     else
       Logger.debug("Making real API authentication request")
-      post("/oauth/token", %{
+      post("/api/v7/auth/token", %{
         grant_type: "password",
         username: username,
         password: password,
@@ -52,7 +52,7 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_refresh_token(refresh_token)
     else
       Logger.debug("Making real API token refresh request")
-      post("/oauth/token", %{
+      post("/api/v7/auth/token", %{
         grant_type: "refresh_token",
         refresh_token: refresh_token,
         client_id: Application.get_env(:schedshare, :api_client_id),
@@ -73,7 +73,23 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_fetch_schedule(access_token)
     else
       Logger.debug("Making real API schedule request")
-      get("/api/bookings", headers: [{"authorization", "Bearer #{access_token}"}])
+      get("/api/v6/bookings?type=schedule&page=1&pageSize=100", headers: [{"authorization", "Bearer #{access_token}"}])
+    end
+  end
+
+  @doc """
+  Gets the current customer's information.
+  Returns {:ok, response} with customer data on success.
+  """
+  def get_customer_info(access_token) do
+    Logger.debug("Fetching customer info")
+
+    if mock?() do
+      Logger.debug("Using mock customer info")
+      mock_get_customer_info(access_token)
+    else
+      Logger.debug("Making real API customer info request")
+      get("/api/v6/customers/me", headers: [{"authorization", "Bearer #{access_token}"}])
     end
   end
 
@@ -148,34 +164,61 @@ defmodule Schedshare.Scheduling.HTTPClient do
     {:ok, %Tesla.Env{
       status: 200,
       body: %{
-        "bookings" => [
-          %{
-            "id" => "1",
-            "status" => "CONFIRMED",
-            "title" => "Yoga Class",
-            "location" => "Mock Studio",
-            "activity_type" => "Yoga",
-            "start_time" => DateTime.to_iso8601(now),
-            "end_time" => DateTime.to_iso8601(DateTime.add(now, 3600, :second)),
-            "teacher_name" => "John Doe"
-          },
-          %{
-            "id" => "2",
-            "status" => "CONFIRMED",
-            "title" => "HIIT Training",
-            "location" => "Mock Gym",
-            "activity_type" => "Fitness",
-            "start_time" => DateTime.to_iso8601(tomorrow),
-            "end_time" => DateTime.to_iso8601(DateTime.add(tomorrow, 3600, :second)),
-            "teacher_name" => "Jane Smith"
-          }
-        ]
+        "data" => %{
+          "bookings" => [
+            %{
+              "id" => "1",
+              "status" => "CONFIRMED",
+              "title" => "Yoga Class",
+              "location" => "Mock Studio",
+              "activity_type" => "Yoga",
+              "start_time" => DateTime.to_iso8601(now),
+              "end_time" => DateTime.to_iso8601(DateTime.add(now, 3600, :second)),
+              "teacher_name" => "John Doe"
+            },
+            %{
+              "id" => "2",
+              "status" => "CONFIRMED",
+              "title" => "HIIT Training",
+              "location" => "Mock Gym",
+              "activity_type" => "Fitness",
+              "start_time" => DateTime.to_iso8601(tomorrow),
+              "end_time" => DateTime.to_iso8601(DateTime.add(tomorrow, 3600, :second)),
+              "teacher_name" => "Jane Smith"
+            }
+          ]
+        }
       }
     }}
   end
 
   defp mock_fetch_schedule(token) do
     Logger.debug("Mock: Failed schedule fetch with token: #{token}")
+
+    {:ok, %Tesla.Env{
+      status: 401,
+      body: %{
+        "error" => "invalid_token",
+        "error_description" => "The access token is invalid or has expired"
+      }
+    }}
+  end
+
+  defp mock_get_customer_info("mock_access_token") do
+    Logger.debug("Mock: Successful customer info fetch")
+
+    {:ok, %Tesla.Env{
+      status: 200,
+      body: %{
+        "id" => "1",
+        "name" => "Test Customer",
+        "email" => "test@example.com"
+      }
+    }}
+  end
+
+  defp mock_get_customer_info(_token) do
+    Logger.debug("Mock: Failed customer info fetch")
 
     {:ok, %Tesla.Env{
       status: 401,
