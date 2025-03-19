@@ -103,7 +103,7 @@ defmodule Schedshare.Scheduling.Sync do
                 {:error, error_message}
             end
 
-          {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
+          {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
             error_message = "Failed to refresh token: #{error}"
             Schedshare.Scheduling.update_api_credential(credential, %{
               connection_status: "error",
@@ -120,7 +120,7 @@ defmodule Schedshare.Scheduling.Sync do
             {:error, error_message}
         end
 
-      {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
+      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
         error_message = "API returned error: #{error}"
         Schedshare.Scheduling.update_api_credential(credential, %{
           connection_status: "error",

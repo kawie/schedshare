@@ -272,15 +272,17 @@ defmodule SchedshareWeb.UserSettingsLive do
              |> put_flash(:error, "Failed to save API credentials")}
         end
 
-      {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
+      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Authentication failed: #{error}")}
+         |> put_flash(:error, "Failed to connect: #{error}")
+         |> assign(api_credential_changeset: socket.assigns.api_credential_changeset)}
 
-      {:ok, %Tesla.Env{status: status}} ->
+      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Authentication failed with status #{status}")}
+         |> put_flash(:error, "Failed to disconnect: #{error}")
+         |> assign(api_credential_changeset: socket.assigns.api_credential_changeset)}
 
       {:error, _error} ->
         {:noreply,
@@ -299,7 +301,7 @@ defmodule SchedshareWeb.UserSettingsLive do
          )
          |> put_flash(:info, "Connection successful!")}
 
-      {:ok, %Tesla.Env{status: status, body: %{"error_description" => error}}} ->
+      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
         {:noreply,
          socket
          |> assign(

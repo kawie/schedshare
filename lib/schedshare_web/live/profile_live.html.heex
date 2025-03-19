@@ -163,7 +163,10 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <h3 class="text-base font-semibold text-zinc-900">
-                        <%= booking.course_title %>
+                        <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-emerald-600 inline-flex items-center gap-1">
+                          <%= booking.course_title %>
+                          <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                        </a>
                       </h3>
                       <p class="mt-1 text-sm text-zinc-500">
                         with <%= booking.teacher_name %>
