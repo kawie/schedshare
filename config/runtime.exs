@@ -34,7 +34,7 @@ if config_env() == :prod do
 
   # Configure Swoosh for production
   config :schedshare, Schedshare.Mailer,
-    adapter: Swoosh.Adapters.Resend,
+    adapter: Resend.Swoosh.Adapter,
     api_key: System.get_env("RESEND_API_KEY") || raise("RESEND_API_KEY is missing")
 
   # Configure Swoosh API client
@@ -58,10 +58,10 @@ if config_env() == :prod do
   config :schedshare, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :schedshare, SchedshareWeb.Endpoint,
-    url: [host: "schedshare.de", port: 443, scheme: "https"],
+    url: [host: host, port: 443, scheme: "https"],
     check_origin: [
-      "https://schedshare.de",
-      "https://schedshare.fly.dev"
+      "https://#{host}",
+      "https://schedshare.de"
     ],
     http: [
       # Enable IPv6 and bind on all interfaces.
