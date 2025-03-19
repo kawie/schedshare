@@ -2,7 +2,7 @@ defmodule Schedshare.Scheduling.HTTPClient do
   use Tesla
   require Logger
 
-  plug Tesla.Middleware.BaseUrl, Application.get_env(:schedshare, :sports_schedule_api_url, "http://localhost:4001")
+  plug Tesla.Middleware.BaseUrl, System.get_env("API_BASE_URL")
   plug Tesla.Middleware.Headers, [
     {"user-agent", "schedshare"},
     {"device-name", "schedshare"}
@@ -80,10 +80,10 @@ defmodule Schedshare.Scheduling.HTTPClient do
   # Private helpers
 
   defp mock?() do
-    # Always use mock in dev/test environments
+    # Only use mock in test environment
     env = Application.get_env(:schedshare, :env, :dev)
     Logger.debug("Current environment: #{env}")
-    env in [:dev, :test]
+    env == :test
   end
 
   # Mock API implementations for development and testing

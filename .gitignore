@@ -49,3 +49,6 @@ npm-debug.log
 cursorrules.json
 
 .DS_Store
+
+.env
+source_env.sh
