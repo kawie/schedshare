@@ -181,6 +181,9 @@ defmodule SchedshareWeb.IndexLive do
                 Log in <span aria-hidden="true">→</span>
               </.link>
             </div>
+            <div class="mt-10">
+              <p>Questions? <a href="mailto:post@kai.gs" class="text-emerald-600 hover:text-emerald-500">post@kai.gs</a></p>
+            </div>
           <% end %>
         </div>
       </div>
