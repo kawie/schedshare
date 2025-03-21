@@ -51,7 +51,7 @@ defmodule SchedshareWeb.ProfileLive do
 
       {:ok,
        assign(socket,
-         page_title: "Profile - #{user.email}",
+         page_title: "#{user.name || user.email} - Profile",
          user: user,
          followers: followers,
          following: following,

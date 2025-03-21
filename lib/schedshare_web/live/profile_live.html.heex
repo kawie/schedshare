@@ -225,12 +225,17 @@
                       current_user_courses = Schedshare.Scheduling.list_user_schedules(@current_user.id)
                       |> Enum.flat_map(fn schedule -> 
                         Enum.map(schedule.bookings || [], fn b -> 
-                          {b.course_external_id, b.course_title, b.start_datetime_utc}
+                          # Only include active bookings
+                          if b.status not in ["DELETED", "CANCELLED"] do
+                            {b.course_external_id, b.course_title, b.start_datetime_utc}
+                          end
                         end)
+                        |> Enum.reject(&is_nil/1)  # Remove nil entries from cancelled/deleted bookings
                       end)
                       
                       # Check if any of the current user's courses match this booking
-                      Enum.any?(current_user_courses, fn
+                      # Only show "You're going together" if the booking we're looking at is also not cancelled/deleted
+                      booking.status not in ["DELETED", "CANCELLED"] && Enum.any?(current_user_courses, fn
                         {external_id, _, _} when not is_nil(external_id) and not is_nil(booking.course_external_id) -> 
                           external_id == booking.course_external_id
                         {nil, title, start_time} when not is_nil(title) and not is_nil(booking.course_title) -> 
