@@ -7,6 +7,7 @@ defmodule SchedshareWeb.IndexLive do
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
+      recent_bookings = Scheduling.list_recent_followed_bookings(socket.assigns.current_user.id)
       users =
         if Accounts.is_admin?(socket.assigns.current_user) do
           Accounts.list_users()
@@ -21,32 +22,32 @@ defmodule SchedshareWeb.IndexLive do
         else
           []
         end
-      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests)}
+      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings)}
     else
       {:ok, assign(socket, page_title: "SchedShare")}
     end
   end
 
-  def handle_event("approve_request", %{"id" => follow_id}, socket) do
-    case Accounts.approve_follow(follow_id) do
-      {:ok, follow} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == follow.id))
+  def handle_event("approve_request", %{"id" => id}, socket) do
+    case Accounts.approve_follow(id) do
+      {:ok, _follow} ->
+        pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
         {:noreply,
          socket
          |> assign(pending_requests: pending_requests)
-         |> put_flash(:info, "Follow request approved!")}
+         |> put_flash(:info, "Follow request approved")}
 
       {:error, _} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Unable to approve request")}
+         |> put_flash(:error, "Failed to approve follow request")}
     end
   end
 
-  def handle_event("reject_request", %{"id" => follow_id}, socket) do
-    case Accounts.delete_follow(follow_id) do
-      {:ok, follow} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == follow.id))
+  def handle_event("reject_request", %{"id" => id}, socket) do
+    case Accounts.delete_follow(id) do
+      {:ok, _} ->
+        pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
         {:noreply,
          socket
          |> assign(pending_requests: pending_requests)
@@ -55,7 +56,7 @@ defmodule SchedshareWeb.IndexLive do
       {:error, _} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Unable to reject request")}
+         |> put_flash(:error, "Failed to reject follow request")}
     end
   end
 
@@ -86,31 +87,87 @@ defmodule SchedshareWeb.IndexLive do
                 </.link>
 
                 <%= if length(@pending_requests) > 0 do %>
-                  <div class="mt-6 border-t border-zinc-200 pt-6">
+                  <div class="mt-4">
                     <h3 class="text-lg font-semibold text-zinc-900">Pending Follow Requests</h3>
-                    <div class="mt-4 divide-y divide-zinc-200">
+                    <div class="mt-2 divide-y divide-zinc-200">
                       <%= for request <- @pending_requests do %>
                         <div class="flex items-center justify-between py-3">
-                          <div class="flex items-center">
-                            <.link navigate={~p"/profile/#{request.follower.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
-                              <%= request.follower.email %>
-                            </.link>
-                          </div>
                           <div class="flex items-center gap-3">
+                            <%= if request.follower.profile_picture do %>
+                              <img src={request.follower.profile_picture} alt={request.follower.name || request.follower.email} class="h-8 w-8 rounded-full" />
+                            <% else %>
+                              <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                              </div>
+                            <% end %>
+                            <div>
+                              <div class="text-sm font-medium text-zinc-900">
+                                <%= request.follower.name || request.follower.email %>
+                              </div>
+                              <%= if request.follower.name do %>
+                                <div class="text-xs text-zinc-500">
+                                  <%= request.follower.email %>
+                                </div>
+                              <% end %>
+                            </div>
+                          </div>
+                          <div class="flex gap-2">
                             <button
                               phx-click="approve_request"
                               phx-value-id={request.id}
-                              class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                              class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
                             >
                               Approve
                             </button>
                             <button
                               phx-click="reject_request"
                               phx-value-id={request.id}
-                              class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
+                              class="rounded-md bg-zinc-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-500"
                             >
                               Reject
                             </button>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+
+                <%= if length(@recent_bookings) > 0 do %>
+                  <div class="mt-8 border-t border-zinc-200 pt-8">
+                    <h3 class="text-lg font-semibold text-zinc-900">Recent Bookings from People You Follow</h3>
+                    <div class="mt-4 divide-y divide-zinc-200">
+                      <%= for booking <- @recent_bookings do %>
+                        <div class="py-4">
+                          <div class="flex items-center gap-3 mb-2">
+                            <.link navigate={~p"/profile/#{booking.schedule.user.id}"} class="flex items-center gap-3 text-zinc-900 hover:text-zinc-600">
+                              <%= if booking.schedule.user.profile_picture do %>
+                                <img src={booking.schedule.user.profile_picture} alt={booking.schedule.user.name || booking.schedule.user.email} class="h-8 w-8 rounded-full" />
+                              <% else %>
+                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                                </div>
+                              <% end %>
+                              <span class="text-sm font-medium"><%= booking.schedule.user.name || booking.schedule.user.email %></span>
+                            </.link>
+                            <span class="text-sm text-zinc-500">booked</span>
+                          </div>
+                          <div class="pl-11">
+                            <h4 class="text-base font-medium text-zinc-900">
+                              <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-emerald-600 inline-flex items-center gap-1">
+                                <%= booking.course_title %>
+                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+                              </a>
+                            </h4>
+                            <div class="mt-1 text-sm text-zinc-500">
+                              <%= DatetimeHelper.format_weekday_date(booking.start_datetime_utc) %> at <%= DatetimeHelper.format_time(booking.start_datetime_utc) %>
+                            </div>
+                            <div class="text-sm text-zinc-500">
+                              <%= booking.venue_name %>
+                            </div>
+                            <div class="mt-1 text-xs text-zinc-400">
+                              Booked <%= DatetimeHelper.format_relative_time(booking.inserted_at) %>
+                            </div>
                           </div>
                         </div>
                       <% end %>

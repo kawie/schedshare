@@ -319,4 +319,25 @@ defmodule Schedshare.Scheduling do
 
     credentials
   end
+
+  @doc """
+  Returns a list of recent bookings from users that the current user follows.
+  Only returns the 10 most recent bookings that are not deleted or cancelled.
+  """
+  def list_recent_followed_bookings(user_id) do
+    followed_users_query =
+      from f in Schedshare.Accounts.Follow,
+        where: f.follower_id == ^user_id and f.status == :approved,
+        select: f.followed_id
+
+    Booking
+    |> join(:inner, [b], s in Schedule, on: b.schedule_id == s.id)
+    |> join(:inner, [b, s], u in Schedshare.Accounts.User, on: s.user_id == u.id)
+    |> where([b, s], s.user_id in subquery(followed_users_query))
+    |> where([b], b.status not in ["DELETED", "CANCELLED"])
+    |> order_by([b], desc: b.inserted_at)
+    |> limit(10)
+    |> preload([b, s, u], schedule: {s, user: u})
+    |> Repo.all()
+  end
 end
