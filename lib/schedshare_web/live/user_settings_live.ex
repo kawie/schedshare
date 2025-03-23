@@ -278,12 +278,6 @@ defmodule SchedshareWeb.UserSettingsLive do
          |> put_flash(:error, "Failed to connect: #{error}")
          |> assign(api_credential_changeset: socket.assigns.api_credential_changeset)}
 
-      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to disconnect: #{error}")
-         |> assign(api_credential_changeset: socket.assigns.api_credential_changeset)}
-
       {:error, _error} ->
         {:noreply,
          socket

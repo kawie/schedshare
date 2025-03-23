@@ -48,6 +48,7 @@ defmodule SchedshareWeb.ProfileLive do
       api_credential = if is_self, do: Scheduling.get_user_api_credential(user.id), else: nil
       api_credential_changeset = if is_self, do: Scheduling.change_api_credential(api_credential || %ApiCredential{}), else: nil
       has_credentials = if is_self, do: not is_nil(api_credential), else: false
+      last_sync = if api_credential, do: api_credential.last_sync_at, else: nil
 
       {:ok,
        assign(socket,
@@ -64,7 +65,8 @@ defmodule SchedshareWeb.ProfileLive do
          other_users_in_course: other_users_in_course,
          api_credential: api_credential,
          api_credential_changeset: api_credential_changeset,
-         has_credentials: has_credentials
+         has_credentials: has_credentials,
+         last_sync: last_sync
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
@@ -104,6 +106,7 @@ defmodule SchedshareWeb.ProfileLive do
       api_credential = Scheduling.get_user_api_credential(user.id)
       api_credential_changeset = Scheduling.change_api_credential(api_credential || %ApiCredential{})
       has_credentials = not is_nil(api_credential)
+      last_sync = if api_credential, do: api_credential.last_sync_at, else: nil
 
       {:ok,
        assign(socket,
@@ -118,7 +121,8 @@ defmodule SchedshareWeb.ProfileLive do
          other_users_in_course: other_users_in_course,
          api_credential: api_credential,
          api_credential_changeset: api_credential_changeset,
-         has_credentials: has_credentials
+         has_credentials: has_credentials,
+         last_sync: last_sync
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}

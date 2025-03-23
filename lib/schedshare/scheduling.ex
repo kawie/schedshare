@@ -11,6 +11,21 @@ defmodule Schedshare.Scheduling do
   alias Schedshare.Scheduling.ApiCredential
 
   @doc """
+  Returns a list of active API credentials.
+  A credential is considered active if:
+  1. It has a valid access token
+  2. Its connection_status is "connected"
+  3. Its last sync was successful (no connection_error)
+  """
+  def list_active_api_credentials do
+    ApiCredential
+    |> where([c], c.connection_status == "connected")
+    |> where([c], is_nil(c.connection_error))
+    |> where([c], not is_nil(c.access_token))
+    |> Repo.all()
+  end
+
+  @doc """
   Returns the list of schedules for a user.
   """
   def list_user_schedules(user_id) do
@@ -256,5 +271,50 @@ defmodule Schedshare.Scheduling do
           end
       end
     end)
+  end
+
+  @doc """
+  Returns a list of API credentials that need syncing for a user and their followed users.
+  A credential needs syncing if:
+  1. It has a valid access token
+  2. Its connection_status is "connected"
+  3. Its last sync was successful (no connection_error)
+  4. It hasn't been synced in the last hour
+  5. It belongs to either:
+     - The current user
+     - A user that the current user follows
+  """
+  def list_credentials_needing_sync(current_user_id) do
+    require Logger
+    one_hour_ago = DateTime.add(DateTime.utc_now(), -3600, :second)
+
+    # Get IDs of users that the current user follows
+    followed_users_query =
+      from f in Schedshare.Accounts.Follow,
+        where: f.follower_id == ^current_user_id and f.status == :approved,
+        select: f.followed_id
+
+    followed_users = Repo.all(followed_users_query)
+    Logger.debug("User #{current_user_id} follows users: #{inspect(followed_users)}")
+
+    # Get credentials that need syncing
+    query = ApiCredential
+    |> where([c], c.connection_status == "connected")
+    |> where([c], is_nil(c.connection_error))
+    |> where([c], not is_nil(c.access_token))
+    |> where([c],
+      # Either no last sync, or last sync was more than an hour ago
+      is_nil(c.last_sync_at) or c.last_sync_at < ^one_hour_ago
+    )
+    |> where([c],
+      # Belongs to current user or a followed user
+      c.user_id == ^current_user_id or c.user_id in subquery(followed_users_query)
+    )
+
+    credentials = Repo.all(query)
+    Logger.debug("Found credentials needing sync: #{inspect(Enum.map(credentials, & &1.user_id))}")
+    Logger.debug("Query conditions: connection_status=connected, no error, has token, last_sync < #{DateTime.to_string(one_hour_ago)}")
+
+    credentials
   end
 end

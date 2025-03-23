@@ -19,6 +19,13 @@
           </h1>
           <p class="mt-1 text-sm text-zinc-500">
             <%= @user.email %> · Joined <%= Calendar.strftime(@user.inserted_at, "%B %d, %Y") %>
+            <%= if @has_credentials do %>
+              · <%= if @last_sync do %>
+                Last sync: <%= Calendar.strftime(@last_sync, "%Y-%m-%d %H:%M:%S") %>
+              <% else %>
+                Never synced
+              <% end %>
+            <% end %>
           </p>
         </div>
       </div>

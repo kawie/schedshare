@@ -17,10 +17,10 @@ defmodule Schedshare.Application do
       {Phoenix.PubSub, name: Schedshare.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Schedshare.Finch},
-      # Start a worker by calling: Schedshare.Worker.start_link(arg)
-      # {Schedshare.Worker, arg},
       # Start to serve requests, typically the last entry
-      SchedshareWeb.Endpoint
+      SchedshareWeb.Endpoint,
+      # Start the schedule sync server
+      Schedshare.Scheduling.ScheduleSyncServer
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

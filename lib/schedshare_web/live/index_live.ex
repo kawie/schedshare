@@ -1,11 +1,25 @@
 defmodule SchedshareWeb.IndexLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Accounts
+  alias Schedshare.Scheduling
 
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
-      users = if Accounts.is_admin?(socket.assigns.current_user), do: Accounts.list_users(), else: []
+      users =
+        if Accounts.is_admin?(socket.assigns.current_user) do
+          Accounts.list_users()
+          |> Enum.map(fn user ->
+            credential = Scheduling.get_user_api_credential(user.id)
+            %{
+              user: user,
+              has_credentials: not is_nil(credential),
+              last_sync: if(credential, do: credential.last_sync_at, else: nil)
+            }
+          end)
+        else
+          []
+        end
       {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests)}
     else
       {:ok, assign(socket, page_title: "SchedShare")}
@@ -134,21 +148,39 @@ defmodule SchedshareWeb.IndexLive do
                       <div class="mt-8">
                         <h3 class="text-lg font-semibold text-zinc-900">Users</h3>
                         <div class="mt-4 divide-y divide-zinc-200">
-                          <%= for user <- @users do %>
+                          <%= for %{user: user, has_credentials: has_credentials, last_sync: last_sync} <- @users do %>
                             <div class="flex items-center justify-between py-3">
-                              <div class="flex items-center">
+                              <div class="flex items-center gap-2">
                                 <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
                                   <%= user.email %>
                                 </.link>
                                 <%= if user.is_admin do %>
-                                  <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
                                     Admin
                                   </span>
                                 <% end %>
+                                <%= if has_credentials do %>
+                                  <span class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                    Has API Key
+                                  </span>
+                                <% else %>
+                                  <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                                    No API Key
+                                  </span>
+                                <% end %>
                               </div>
-                              <span class="text-xs text-zinc-500">
-                                Joined <%= Calendar.strftime(user.inserted_at, "%Y-%m-%d") %>
-                              </span>
+                              <div class="flex items-center gap-4 text-xs text-zinc-500">
+                                <span>
+                                  <%= if last_sync do %>
+                                    Last sync: <%= Calendar.strftime(last_sync, "%Y-%m-%d %H:%M:%S") %>
+                                  <% else %>
+                                    Never synced
+                                  <% end %>
+                                </span>
+                                <span>
+                                  Joined <%= Calendar.strftime(user.inserted_at, "%Y-%m-%d") %>
+                                </span>
+                              </div>
                             </div>
                           <% end %>
                         </div>

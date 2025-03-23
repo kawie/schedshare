@@ -8,8 +8,40 @@ defmodule Schedshare.Scheduling.Sync do
   alias Schedshare.Scheduling.{HTTPClient, ApiCredential}
 
   @doc """
+  Syncs schedules for a user and their followed users.
+  Only syncs schedules that haven't been updated in the last hour.
+  Returns a map with :success and :error counts.
+  """
+  def sync_user_and_following(user_id) do
+    Logger.debug("Starting sync_user_and_following for user #{user_id}")
+    credentials = Schedshare.Scheduling.list_credentials_needing_sync(user_id)
+    Logger.debug("Found #{length(credentials)} credentials needing sync: #{inspect(Enum.map(credentials, & &1.user_id))}")
+
+    results = Enum.map(credentials, fn credential ->
+      Logger.debug("Attempting to sync schedule for user #{credential.user_id}")
+      case sync_with_credential(credential) do
+        {:ok, _updated_credential} ->
+          Logger.info("Successfully synced schedule for user #{credential.user_id}")
+          :success
+
+        {:error, reason} ->
+          Logger.error("Failed to sync schedule for user #{credential.user_id}: #{reason}")
+          :error
+      end
+    end)
+
+    result = %{
+      success: Enum.count(results, &(&1 == :success)),
+      error: Enum.count(results, &(&1 == :error))
+    }
+    Logger.debug("Sync complete: #{inspect(result)}")
+    result
+  end
+
+  @doc """
   Syncs a user's schedule with the sports platform.
   Returns {:ok, credential} on success or {:error, reason} on failure.
+  This function always syncs, regardless of when the last sync occurred.
   """
   def sync_user_schedule(user_id) do
     case Schedshare.Scheduling.get_user_api_credential(user_id) do
