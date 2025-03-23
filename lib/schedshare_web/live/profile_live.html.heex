@@ -21,7 +21,7 @@
             <%= @user.email %> · Joined <%= Calendar.strftime(@user.inserted_at, "%B %d, %Y") %>
             <%= if @has_credentials do %>
               · <%= if @last_sync do %>
-                Last sync: <%= Calendar.strftime(@last_sync, "%Y-%m-%d %H:%M:%S") %>
+                Last sync: <%= DatetimeHelper.format_datetime(@last_sync) %>
               <% else %>
                 Never synced
               <% end %>
@@ -164,8 +164,7 @@
         <%= if @schedule do %>
           <%= if @schedule.bookings && length(@schedule.bookings) > 0 do %>
             <div class="mt-4 divide-y divide-zinc-200" data-test-id="booking-list">
-              <%= for booking <- Enum.filter(@schedule.bookings, fn b -> DateTime.compare(b.start_datetime_utc, DateTime.utc_now()) in [:eq, :gt] end)
-                        |> Enum.sort_by(& &1.start_datetime_utc) do %>
+              <%= for booking <- @schedule.bookings do %>
                 <div class="py-6">
                   <div class="flex items-center justify-between">
                     <div>
@@ -189,11 +188,11 @@
                   </div>
                   <div class="mt-2 text-sm text-zinc-500">
                     <p>
-                      <%= Calendar.strftime(booking.start_datetime_utc, "%A, %B %d, %Y") %>
+                      <%= DatetimeHelper.format_weekday_date(booking.start_datetime_utc) %>
                     </p>
                     <p>
-                      <%= Calendar.strftime(booking.start_datetime_utc, "%H:%M") %> - 
-                      <%= Calendar.strftime(booking.end_datetime_utc, "%H:%M") %>
+                      <%= DatetimeHelper.format_time(booking.start_datetime_utc) %> - 
+                      <%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
                     </p>
                     <p class="text-xs text-zinc-400">
                       ID: <%= booking.external_id %>
@@ -241,7 +240,8 @@
                       end)
                       
                       # Check if any of the current user's courses match this booking
-                      # Only show "You're going together" if the booking we're looking at is also not cancelled/deleted
+
+                      # Only show "You're going together" if both bookings are active
                       booking.status not in ["DELETED", "CANCELLED"] && Enum.any?(current_user_courses, fn
                         {external_id, _, _} when not is_nil(external_id) and not is_nil(booking.course_external_id) -> 
                           external_id == booking.course_external_id

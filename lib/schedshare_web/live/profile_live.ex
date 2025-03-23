@@ -3,6 +3,7 @@ defmodule SchedshareWeb.ProfileLive do
   alias Schedshare.Accounts
   alias Schedshare.Scheduling
   alias Schedshare.Scheduling.ApiCredential
+  alias SchedshareWeb.DatetimeHelper
 
   def mount(%{"id" => user_id}, _session, socket) do
     if socket.assigns[:current_user] do

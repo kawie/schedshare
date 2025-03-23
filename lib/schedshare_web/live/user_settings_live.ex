@@ -4,6 +4,7 @@ defmodule SchedshareWeb.UserSettingsLive do
   alias Schedshare.Accounts
   alias Schedshare.Scheduling
   alias Schedshare.Scheduling.{ApiCredential, HTTPClient}
+  alias SchedshareWeb.DatetimeHelper
 
   def render(assigns) do
     ~H"""
@@ -110,7 +111,7 @@ defmodule SchedshareWeb.UserSettingsLive do
                 </span>
                 <%= if @api_credential.last_sync_at do %>
                   <span class="text-sm text-zinc-500">
-                    Last synced <%= Calendar.strftime(@api_credential.last_sync_at, "%B %d, %Y at %H:%M") %>
+                    Last synced <%= DatetimeHelper.format_datetime_pretty(@api_credential.last_sync_at) %>
                   </span>
                 <% end %>
               </div>

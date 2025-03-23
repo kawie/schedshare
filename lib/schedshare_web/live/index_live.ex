@@ -2,6 +2,7 @@ defmodule SchedshareWeb.IndexLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Accounts
   alias Schedshare.Scheduling
+  alias SchedshareWeb.DatetimeHelper
 
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
@@ -172,7 +173,7 @@ defmodule SchedshareWeb.IndexLive do
                               <div class="flex items-center gap-4 text-xs text-zinc-500">
                                 <span>
                                   <%= if last_sync do %>
-                                    Last sync: <%= Calendar.strftime(last_sync, "%Y-%m-%d %H:%M:%S") %>
+                                    Last sync: <%= DatetimeHelper.format_datetime(last_sync) %>
                                   <% else %>
                                     Never synced
                                   <% end %>

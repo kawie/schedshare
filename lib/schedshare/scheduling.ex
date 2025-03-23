@@ -32,7 +32,7 @@ defmodule Schedshare.Scheduling do
     Schedule
     |> where([s], s.user_id == ^user_id)
     |> Repo.all()
-    |> Repo.preload(:bookings)
+    |> Repo.preload([bookings: from(b in Booking, order_by: [asc: b.start_datetime_utc])])
   end
 
   @doc """
@@ -133,6 +133,7 @@ defmodule Schedshare.Scheduling do
     |> join(:inner, [b], s in Schedule, on: b.schedule_id == s.id)
     |> where([b, s], s.user_id != ^current_user_id)
     |> where([b, s], s.user_id in subquery(followed_users_query))
+    |> where([b], b.status not in ["DELETED", "CANCELLED"])  # Filter out cancelled/deleted bookings
 
     query = if is_nil(booking.course_external_id) do
       # If course_external_id is nil, match on title and start_datetime_utc
@@ -237,6 +238,7 @@ defmodule Schedshare.Scheduling do
     # Convert API bookings to our format and sync them
     bookings
     |> Enum.map(fn booking ->
+      # Parse the datetime with timezone info and convert to Berlin time for display
       {:ok, start_datetime, _} = DateTime.from_iso8601(booking["start_time"])
       {:ok, end_datetime, _} = DateTime.from_iso8601(booking["end_time"])
 
@@ -246,8 +248,8 @@ defmodule Schedshare.Scheduling do
         course_external_id: booking["course_external_id"],
         status: booking["status"],
         course_title: booking["title"],
-        start_datetime_utc: start_datetime,
-        end_datetime_utc: end_datetime,
+        start_datetime_utc: start_datetime,  # Keep UTC for storage
+        end_datetime_utc: end_datetime,      # Keep UTC for storage
         venue_name: booking["location"],
         teacher_name: booking["teacher_name"],
         course_types: booking["course_types"] || [],

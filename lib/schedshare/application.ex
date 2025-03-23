@@ -7,6 +7,9 @@ defmodule Schedshare.Application do
 
   @impl true
   def start(_type, _args) do
+    # Configure Elixir to use the tzdata timezone database
+    Application.put_env(:elixir, :time_zone_database, Tzdata.TimeZoneDatabase)
+
     children = [
       SchedshareWeb.Telemetry,
       Schedshare.Repo,

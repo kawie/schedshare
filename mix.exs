@@ -60,7 +60,8 @@ defmodule Schedshare.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:resend, "~> 0.4.4"},
-      {:mogrify, "~> 0.9.3"}
+      {:mogrify, "~> 0.9.3"},
+      {:tzdata, "~> 1.1"}
     ]
   end
 
