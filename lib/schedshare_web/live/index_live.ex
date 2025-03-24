@@ -2,7 +2,10 @@ defmodule SchedshareWeb.IndexLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Accounts
   alias Schedshare.Scheduling
-  alias SchedshareWeb.DatetimeHelper
+  alias SchedshareWeb.Live.Components.PendingRequestsComponent
+  alias SchedshareWeb.Live.Components.RecentBookingsComponent
+  alias SchedshareWeb.Live.Components.AdminUsersComponent
+  alias SchedshareWeb.Live.Components.WelcomeSectionComponent
 
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
@@ -63,15 +66,8 @@ defmodule SchedshareWeb.IndexLive do
   def render(assigns) do
     ~H"""
     <div class="h-full bg-white">
-      <div class="mx-auto max-w-2xl py-16 px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-2xl py-4 px-4 sm:px-6 lg:px-8">
         <div class="">
-          <h1 class="text-4xl font-bold tracking-tight text-zinc-900 sm:text-6xl">
-            SchedShare
-          </h1>
-          <p class="mt-6 text-lg leading-8 text-zinc-600">
-            Share and sync your sports class schedules with friends
-          </p>
-
           <%= if @current_user do %>
             <div class="mt-10">
               <h2 class="text-2xl font-semibold text-zinc-900">
@@ -86,94 +82,17 @@ defmodule SchedshareWeb.IndexLive do
                   View my schedule →
                 </.link>
 
-                <%= if length(@pending_requests) > 0 do %>
-                  <div class="mt-4">
-                    <h3 class="text-lg font-semibold text-zinc-900">Pending Follow Requests</h3>
-                    <div class="mt-2 divide-y divide-zinc-200">
-                      <%= for request <- @pending_requests do %>
-                        <div class="flex items-center justify-between py-3">
-                          <div class="flex items-center gap-3">
-                            <%= if request.follower.profile_picture do %>
-                              <img src={request.follower.profile_picture} alt={request.follower.name || request.follower.email} class="h-8 w-8 rounded-full" />
-                            <% else %>
-                              <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
-                              </div>
-                            <% end %>
-                            <div>
-                              <div class="text-sm font-medium text-zinc-900">
-                                <%= request.follower.name || request.follower.email %>
-                              </div>
-                              <%= if request.follower.name do %>
-                                <div class="text-xs text-zinc-500">
-                                  <%= request.follower.email %>
-                                </div>
-                              <% end %>
-                            </div>
-                          </div>
-                          <div class="flex gap-2">
-                            <button
-                              phx-click="approve_request"
-                              phx-value-id={request.id}
-                              class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              phx-click="reject_request"
-                              phx-value-id={request.id}
-                              class="rounded-md bg-zinc-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-500"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% end %>
+                <.live_component
+                  module={PendingRequestsComponent}
+                  id="pending-requests"
+                  pending_requests={@pending_requests}
+                />
 
-                <%= if length(@recent_bookings) > 0 do %>
-                  <div class="mt-8 border-t border-zinc-200 pt-8">
-                    <h3 class="text-lg font-semibold text-zinc-900">Recent Bookings from People You Follow</h3>
-                    <div class="mt-4 divide-y divide-zinc-200">
-                      <%= for booking <- @recent_bookings do %>
-                        <div class="py-4">
-                          <div class="flex items-center gap-3 mb-2">
-                            <.link navigate={~p"/profile/#{booking.schedule.user.id}"} class="flex items-center gap-3 text-zinc-900 hover:text-zinc-600">
-                              <%= if booking.schedule.user.profile_picture do %>
-                                <img src={booking.schedule.user.profile_picture} alt={booking.schedule.user.name || booking.schedule.user.email} class="h-8 w-8 rounded-full" />
-                              <% else %>
-                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
-                                </div>
-                              <% end %>
-                              <span class="text-sm font-medium"><%= booking.schedule.user.name || booking.schedule.user.email %></span>
-                            </.link>
-                            <span class="text-sm text-zinc-500">booked</span>
-                          </div>
-                          <div class="pl-11">
-                            <h4 class="text-base font-medium text-zinc-900">
-                              <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-emerald-600 inline-flex items-center gap-1">
-                                <%= booking.course_title %>
-                                <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                              </a>
-                            </h4>
-                            <div class="mt-1 text-sm text-zinc-500">
-                              <%= DatetimeHelper.format_weekday_date(booking.start_datetime_utc) %> at <%= DatetimeHelper.format_time(booking.start_datetime_utc) %>
-                            </div>
-                            <div class="text-sm text-zinc-500">
-                              <%= booking.venue_name %>
-                            </div>
-                            <div class="mt-1 text-xs text-zinc-400">
-                              Booked <%= DatetimeHelper.format_relative_time(booking.inserted_at) %>
-                            </div>
-                          </div>
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% end %>
+                <.live_component
+                  module={RecentBookingsComponent}
+                  id="recent-bookings"
+                  recent_bookings={@recent_bookings}
+                />
 
                 <div class="mt-4 flex flex-col gap-4">
                   <.link
@@ -203,46 +122,11 @@ defmodule SchedshareWeb.IndexLive do
                         </div>
                       <% end %>
 
-                      <div class="mt-8">
-                        <h3 class="text-lg font-semibold text-zinc-900">Users</h3>
-                        <div class="mt-4 divide-y divide-zinc-200">
-                          <%= for %{user: user, has_credentials: has_credentials, last_sync: last_sync} <- @users do %>
-                            <div class="flex items-center justify-between py-3">
-                              <div class="flex items-center gap-2">
-                                <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-600 hover:text-zinc-900">
-                                  <%= user.email %>
-                                </.link>
-                                <%= if user.is_admin do %>
-                                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                                    Admin
-                                  </span>
-                                <% end %>
-                                <%= if has_credentials do %>
-                                  <span class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                                    Has API Key
-                                  </span>
-                                <% else %>
-                                  <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-                                    No API Key
-                                  </span>
-                                <% end %>
-                              </div>
-                              <div class="flex items-center gap-4 text-xs text-zinc-500">
-                                <span>
-                                  <%= if last_sync do %>
-                                    Last sync: <%= DatetimeHelper.format_datetime(last_sync) %>
-                                  <% else %>
-                                    Never synced
-                                  <% end %>
-                                </span>
-                                <span>
-                                  Joined <%= Calendar.strftime(user.inserted_at, "%Y-%m-%d") %>
-                                </span>
-                              </div>
-                            </div>
-                          <% end %>
-                        </div>
-                      </div>
+                      <.live_component
+                        module={AdminUsersComponent}
+                        id="admin-users"
+                        users={@users}
+                      />
                     </div>
                   <% end %>
 
@@ -257,23 +141,10 @@ defmodule SchedshareWeb.IndexLive do
               </div>
             </div>
           <% else %>
-            <div class="mt-10 flex items-center justify-center gap-x-6">
-              <.link
-                navigate="/users/register"
-                class="rounded-lg bg-zinc-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600"
-              >
-                Register
-              </.link>
-              <.link
-                navigate="/users/log_in"
-                class="text-sm font-semibold leading-6 text-zinc-900"
-              >
-                Log in <span aria-hidden="true">→</span>
-              </.link>
-            </div>
-            <div class="mt-10">
-              <p>Questions? <a href="mailto:post@kai.gs" class="text-emerald-600 hover:text-emerald-500">post@kai.gs</a></p>
-            </div>
+            <.live_component
+              module={WelcomeSectionComponent}
+              id="welcome-section"
+            />
           <% end %>
         </div>
       </div>
