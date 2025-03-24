@@ -82,6 +82,13 @@ defmodule SchedshareWeb.IndexLive do
                   View my schedule →
                 </.link>
 
+                <.link
+                    navigate="/users/settings"
+                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  >
+                    Settings →
+                </.link>
+
                 <.live_component
                   module={PendingRequestsComponent}
                   id="pending-requests"
@@ -95,13 +102,6 @@ defmodule SchedshareWeb.IndexLive do
                 />
 
                 <div class="mt-4 flex flex-col gap-4">
-                  <.link
-                    navigate="/users/settings"
-                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-                  >
-                    Settings →
-                  </.link>
-
                   <%= if Accounts.is_admin?(@current_user) do %>
                     <div class="mt-6 border-t border-zinc-200 pt-6">
                       <h3 class="text-lg font-semibold text-zinc-900">Admin Tools</h3>
