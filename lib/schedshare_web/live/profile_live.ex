@@ -8,21 +8,20 @@ defmodule SchedshareWeb.ProfileLive do
   def mount(%{"id" => user_id}, _session, socket) do
     if socket.assigns[:current_user] do
       user = Accounts.get_user!(user_id)
-      followers = Accounts.get_followers(user.id)
-      following = Accounts.get_following(user.id)
-      pending_requests = Accounts.get_pending_follow_requests(user.id)
+      friends = Accounts.get_friends(user.id)
+      pending_requests = Accounts.get_pending_friend_requests(user.id)
 
-      # Check if current user has a pending follow request or is already following
-      follow = Accounts.get_follow(socket.assigns.current_user.id, user.id)
-      is_following = follow && follow.status == :approved
-      has_pending_request = follow && follow.status == :pending
+      # Check if current user has a pending friend request or is already friends
+      friendship = Accounts.get_friendship(socket.assigns.current_user.id, user.id)
+      is_friend = friendship && friendship.status == :accepted
+      has_pending_request = friendship && friendship.status == :pending
 
       is_self = socket.assigns.current_user.id == user.id
       is_admin = Accounts.is_admin?(socket.assigns.current_user)
 
-      # Load schedule and bookings if user is self or an approved follower
+      # Load schedule and bookings if user is self or a friend
       schedule_with_bookings =
-        if is_self || is_following do
+        if is_self || is_friend do
           case Scheduling.list_user_schedules(user.id) do
             [schedule] ->
               # Filter out deleted bookings
@@ -55,10 +54,9 @@ defmodule SchedshareWeb.ProfileLive do
        assign(socket,
          page_title: "#{user.name || user.email} - Profile",
          user: user,
-         followers: followers,
-         following: following,
+         friends: friends,
          pending_requests: pending_requests,
-         is_following: is_following,
+         is_friend: is_friend,
          has_pending_request: has_pending_request,
          is_self: is_self,
          is_admin: is_admin,
@@ -77,9 +75,8 @@ defmodule SchedshareWeb.ProfileLive do
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       user = socket.assigns.current_user
-      followers = Accounts.get_followers(user.id)
-      following = Accounts.get_following(user.id)
-      pending_requests = Accounts.get_pending_follow_requests(user.id)
+      friends = Accounts.get_friends(user.id)
+      pending_requests = Accounts.get_pending_friend_requests(user.id)
       is_admin = Accounts.is_admin?(socket.assigns.current_user)
 
       # Load own schedule and bookings
@@ -113,8 +110,7 @@ defmodule SchedshareWeb.ProfileLive do
        assign(socket,
          page_title: "My Profile",
          user: user,
-         followers: followers,
-         following: following,
+         friends: friends,
          pending_requests: pending_requests,
          is_self: true,
          is_admin: is_admin,
@@ -172,66 +168,63 @@ defmodule SchedshareWeb.ProfileLive do
     end
   end
 
-  def handle_event("follow", _, socket) do
-    case Accounts.create_follow(socket.assigns.current_user.id, socket.assigns.user.id) do
-      {:ok, _follow} ->
+  def handle_event("add_friend", _, socket) do
+    case Accounts.create_friendship(socket.assigns.current_user.id, socket.assigns.user.id) do
+      {:ok, _friendship} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Follow request sent!")
+         |> put_flash(:info, "Friend request sent!")
          |> assign(has_pending_request: true)}
 
       {:error, _changeset} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Unable to send follow request")}
+         |> put_flash(:error, "Unable to send friend request")}
     end
   end
 
-  def handle_event("unfollow", _, socket) do
-    with follow <- Accounts.get_follow(socket.assigns.current_user.id, socket.assigns.user.id),
-         {:ok, _} <- Accounts.delete_follow(follow.id) do
-      # Update followers list if we were in their followers
-      followers = Enum.reject(socket.assigns.followers, fn f -> f.follower_id == socket.assigns.current_user.id end)
-
+  def handle_event("remove_friend", _, socket) do
+    with friendship <- Accounts.get_friendship(socket.assigns.current_user.id, socket.assigns.user.id),
+         {:ok, _} <- Accounts.delete_friendship(friendship.id) do
       {:noreply,
        socket
-       |> assign(is_following: false, has_pending_request: false, followers: followers)
-       |> put_flash(:info, "Unfollowed successfully")}
+       |> assign(is_friend: false, has_pending_request: false)
+       |> put_flash(:info, "Friend removed successfully")}
     else
       _ ->
         {:noreply,
          socket
-         |> put_flash(:error, "Unable to unfollow user")}
+         |> put_flash(:error, "Unable to remove friend")}
     end
   end
 
-  def handle_event("approve_request", %{"id" => follow_id}, socket) do
-    case Accounts.approve_follow(follow_id) do
-      {:ok, follow} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == follow.id))
-        followers = [follow | socket.assigns.followers]
+  def handle_event("accept_request", %{"id" => friendship_id}, socket) do
+    case Accounts.accept_friendship(friendship_id) do
+      {:ok, friendship} ->
+        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == friendship.id))
+        friends = [if(friendship.user1_id == socket.assigns.user.id, do: friendship.user2, else: friendship.user1) | socket.assigns.friends]
 
         {:noreply,
          socket
-         |> assign(pending_requests: pending_requests, followers: followers)
-         |> put_flash(:info, "Follow request approved!")}
+         |> assign(pending_requests: pending_requests, friends: friends)
+         |> put_flash(:info, "Friend request accepted!")}
 
       {:error, _} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Unable to approve request")}
+         |> put_flash(:error, "Unable to accept request")}
     end
   end
 
-  def handle_event("reject_request", %{"id" => follow_id}, socket) do
-    case Accounts.delete_follow(follow_id) do
-      {:ok, follow} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == follow.id))
+  def handle_event("reject_request", %{"id" => friendship_id}, socket) do
+    case Accounts.reject_friendship(friendship_id) do
+      {:ok, friendship} ->
+        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == friendship.id))
 
         {:noreply,
          socket
          |> assign(pending_requests: pending_requests)
-         |> put_flash(:info, "Follow request rejected")}
+         |> put_flash(:info, "Friend request rejected")}
 
       {:error, _} ->
         {:noreply,

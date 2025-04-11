@@ -12,9 +12,10 @@ defmodule Schedshare.Accounts.User do
     field :name, :string
     field :profile_picture, :string  # This will store the base64 image data
 
-    # Follow relationships
-    has_many :following, Schedshare.Accounts.Follow, foreign_key: :follower_id
-    has_many :followers, Schedshare.Accounts.Follow, foreign_key: :followed_id
+    # Friendship relationships
+    has_many :friendships_as_user1, Schedshare.Accounts.Friendship, foreign_key: :user1_id
+    has_many :friendships_as_user2, Schedshare.Accounts.Friendship, foreign_key: :user2_id
+    has_many :friend_requests_sent, Schedshare.Accounts.Friendship, foreign_key: :requested_by_id
 
     timestamps(type: :utc_datetime)
   end

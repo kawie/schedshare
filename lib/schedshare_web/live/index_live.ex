@@ -9,8 +9,8 @@ defmodule SchedshareWeb.IndexLive do
 
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
-      pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
-      recent_bookings = Scheduling.list_recent_followed_bookings(socket.assigns.current_user.id)
+      pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
+      recent_bookings = Scheduling.list_recent_friend_bookings(socket.assigns.current_user.id)
       users =
         if Accounts.is_admin?(socket.assigns.current_user) do
           Accounts.list_users()
@@ -31,35 +31,23 @@ defmodule SchedshareWeb.IndexLive do
     end
   end
 
-  def handle_event("approve_request", %{"id" => id}, socket) do
-    case Accounts.approve_follow(id) do
-      {:ok, _follow} ->
-        pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
-        {:noreply,
-         socket
-         |> assign(pending_requests: pending_requests)
-         |> put_flash(:info, "Follow request approved")}
-
+  def handle_event("accept_request", %{"id" => id}, socket) do
+    case Accounts.accept_friendship(id) do
+      {:ok, _friendship} ->
+        pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
+        {:noreply, socket |> assign(pending_requests: pending_requests) |> put_flash(:info, "Friend request accepted")}
       {:error, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to approve follow request")}
+        {:noreply, socket |> put_flash(:error, "Unable to accept friend request")}
     end
   end
 
   def handle_event("reject_request", %{"id" => id}, socket) do
-    case Accounts.delete_follow(id) do
+    case Accounts.delete_friendship(id) do
       {:ok, _} ->
-        pending_requests = Accounts.get_pending_follow_requests(socket.assigns.current_user.id)
-        {:noreply,
-         socket
-         |> assign(pending_requests: pending_requests)
-         |> put_flash(:info, "Follow request rejected")}
-
+        pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
+        {:noreply, socket |> assign(pending_requests: pending_requests) |> put_flash(:info, "Friend request rejected")}
       {:error, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to reject follow request")}
+        {:noreply, socket |> put_flash(:error, "Unable to reject friend request")}
     end
   end
 

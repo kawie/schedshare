@@ -270,4 +270,92 @@ defmodule SchedshareWeb.ProfileLiveTest do
       refute view |> element("p", ~r/going together/) |> has_element?()
     end
   end
+
+  describe "Profile schedules" do
+    test "shows user's schedule when viewing own profile", %{conn: conn} do
+      user = user_fixture()
+      conn = log_in_user(conn, user)
+
+      # Create a schedule with a sports course
+      {:ok, schedule} = Schedshare.Scheduling.create_schedule(user, %{name: "My Schedule"})
+      now = DateTime.utc_now()
+      tomorrow = DateTime.add(now, 24 * 60 * 60, :second)
+
+      {:ok, course} = Schedshare.Scheduling.create_course(%{
+        course_title: "Vinyasa Flow Yoga",
+        course_external_id: 101,
+        start_datetime_utc: tomorrow,
+        end_datetime_utc: DateTime.add(tomorrow, 1 * 60 * 60, :second),
+        venue_name: "Zen Studio",
+        venue_full_address: "123 Peace St, Berlin",
+        teacher_name: "Sarah"
+      })
+
+      {:ok, _booking} = Schedshare.Scheduling.create_booking(schedule, course)
+
+      {:ok, _lv, html} = live(conn, ~p"/profiles/#{user.id}")
+      assert html =~ "My Schedule"
+      assert html =~ "Vinyasa Flow Yoga"
+      assert html =~ "Zen Studio"
+    end
+
+    test "shows friend's schedule when friends", %{conn: conn} do
+      user = user_fixture()
+      friend = user_fixture()
+      conn = log_in_user(conn, user)
+
+      # Create friendship
+      {:ok, _friendship} = Schedshare.Accounts.create_friendship(user.id, friend.id)
+      {:ok, _friendship} = Schedshare.Accounts.accept_friendship(friend.id, user.id)
+
+      # Create friend's schedule with a sports course
+      {:ok, schedule} = Schedshare.Scheduling.create_schedule(friend, %{name: "Friend's Schedule"})
+      now = DateTime.utc_now()
+      tomorrow = DateTime.add(now, 24 * 60 * 60, :second)
+
+      {:ok, course} = Schedshare.Scheduling.create_course(%{
+        course_title: "HIIT Training",
+        course_external_id: 201,
+        start_datetime_utc: tomorrow,
+        end_datetime_utc: DateTime.add(tomorrow, 1 * 60 * 60, :second),
+        venue_name: "Power Gym",
+        venue_full_address: "456 Energy Ave, Berlin",
+        teacher_name: "Mike"
+      })
+
+      {:ok, _booking} = Schedshare.Scheduling.create_booking(schedule, course)
+
+      {:ok, _lv, html} = live(conn, ~p"/profiles/#{friend.id}")
+      assert html =~ "Friend's Schedule"
+      assert html =~ "HIIT Training"
+      assert html =~ "Power Gym"
+    end
+
+    test "hides non-friend's schedule", %{conn: conn} do
+      user = user_fixture()
+      stranger = user_fixture()
+      conn = log_in_user(conn, user)
+
+      # Create stranger's schedule
+      {:ok, schedule} = Schedshare.Scheduling.create_schedule(stranger, %{name: "Stranger's Schedule"})
+      now = DateTime.utc_now()
+      tomorrow = DateTime.add(now, 24 * 60 * 60, :second)
+
+      {:ok, course} = Schedshare.Scheduling.create_course(%{
+        course_title: "Pilates Core",
+        course_external_id: 301,
+        start_datetime_utc: tomorrow,
+        end_datetime_utc: DateTime.add(tomorrow, 1 * 60 * 60, :second),
+        venue_name: "Core Studio",
+        venue_full_address: "789 Balance St, Berlin",
+        teacher_name: "Lisa"
+      })
+
+      {:ok, _booking} = Schedshare.Scheduling.create_booking(schedule, course)
+
+      {:ok, _lv, html} = live(conn, ~p"/profiles/#{stranger.id}")
+      refute html =~ "Stranger's Schedule"
+      refute html =~ "Pilates Core"
+    end
+  end
 end

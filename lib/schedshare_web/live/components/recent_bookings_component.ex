@@ -7,7 +7,7 @@ defmodule SchedshareWeb.Live.Components.RecentBookingsComponent do
     <div id={"recent-bookings-#{@id}"}>
       <%= if length(@recent_bookings) > 0 do %>
         <div class="mt-8 border-t border-zinc-200 pt-8">
-          <h3 class="text-lg font-semibold text-zinc-900">Recent Bookings from People You Follow</h3>
+          <h3 class="text-lg font-semibold text-zinc-900">Recent Bookings from Friends</h3>
           <div class="mt-4 divide-y divide-zinc-200">
             <%= for booking <- @recent_bookings do %>
               <div class="py-4">

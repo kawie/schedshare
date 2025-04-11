@@ -7,7 +7,7 @@ defmodule Schedshare.Accounts do
   alias Schedshare.Repo
   require Logger
 
-  alias Schedshare.Accounts.{User, UserToken, UserNotifier, Follow}
+  alias Schedshare.Accounts.{User, UserToken, UserNotifier, Friendship}
 
   ## Database getters
 
@@ -386,78 +386,92 @@ defmodule Schedshare.Accounts do
   end
 
   @doc """
-  Creates a follow request from one user to another.
+  Creates a friendship request from one user to another.
   """
-  def create_follow(follower_id, followed_id) do
-    %Follow{}
-    |> Follow.changeset(%{follower_id: follower_id, followed_id: followed_id})
+  def create_friendship(user1_id, user2_id) do
+    %Friendship{}
+    |> Friendship.changeset(%{
+      user1_id: min(user1_id, user2_id),
+      user2_id: max(user1_id, user2_id),
+      requested_by_id: user1_id
+    })
     |> Repo.insert()
   end
 
   @doc """
-  Approves a follow request.
+  Accepts a friendship request.
   """
-  def approve_follow(follow_id) do
-    follow = Repo.get!(Follow, follow_id)
-    follow
-    |> Follow.changeset(%{status: :approved})
+  def accept_friendship(friendship_id) do
+    friendship = Repo.get!(Friendship, friendship_id)
+    friendship
+    |> Friendship.changeset(%{status: :accepted})
     |> Repo.update()
   end
 
   @doc """
-  Deletes a follow relationship.
+  Rejects a friendship request.
   """
-  def delete_follow(follow_id) do
-    follow = Repo.get!(Follow, follow_id)
-    Repo.delete(follow)
+  def reject_friendship(friendship_id) do
+    friendship = Repo.get!(Friendship, friendship_id)
+    friendship
+    |> Friendship.changeset(%{status: :rejected})
+    |> Repo.update()
   end
 
   @doc """
-  Gets all followers for a user.
+  Gets all friends for a user.
   """
-  def get_followers(user_id) do
-    Follow
-    |> where([f], f.followed_id == ^user_id and f.status == :approved)
-    |> preload(:follower)
+  def get_friends(user_id) do
+    Friendship
+    |> where([f], (f.user1_id == ^user_id or f.user2_id == ^user_id) and f.status == :accepted)
+    |> preload([:user1, :user2])
+    |> Repo.all()
+    |> Enum.map(fn friendship ->
+      if friendship.user1_id == user_id, do: friendship.user2, else: friendship.user1
+    end)
+  end
+
+  @doc """
+  Gets all pending friend requests for a user.
+  """
+  def get_pending_friend_requests(user_id) do
+    Friendship
+    |> where([f], (f.user1_id == ^user_id or f.user2_id == ^user_id) and f.status == :pending)
+    |> where([f], f.requested_by_id != ^user_id)
+    |> preload([:user1, :user2, :requested_by])
     |> Repo.all()
   end
 
   @doc """
-  Gets all users that a user is following.
+  Checks if two users are friends.
   """
-  def get_following(user_id) do
-    Follow
-    |> where([f], f.follower_id == ^user_id and f.status == :approved)
-    |> preload(:followed)
-    |> Repo.all()
-  end
-
-  @doc """
-  Gets all pending follow requests for a user.
-  """
-  def get_pending_follow_requests(user_id) do
-    Follow
-    |> where([f], f.followed_id == ^user_id and f.status == :pending)
-    |> preload(:follower)
-    |> Repo.all()
-  end
-
-  @doc """
-  Checks if a user is following another user.
-  """
-  def is_following?(follower_id, followed_id) do
-    Follow
-    |> where([f], f.follower_id == ^follower_id and f.followed_id == ^followed_id)
+  def is_friends?(user1_id, user2_id) do
+    Friendship
+    |> where([f],
+      (f.user1_id == ^min(user1_id, user2_id) and f.user2_id == ^max(user1_id, user2_id)) and
+      f.status == :accepted
+    )
     |> Repo.exists?()
   end
 
   @doc """
-  Gets a specific follow relationship between two users.
+  Gets a specific friendship between two users.
   """
-  def get_follow(follower_id, followed_id) do
-    Follow
-    |> where([f], f.follower_id == ^follower_id and f.followed_id == ^followed_id)
+  def get_friendship(user1_id, user2_id) do
+    Friendship
+    |> where([f],
+      f.user1_id == ^min(user1_id, user2_id) and
+      f.user2_id == ^max(user1_id, user2_id)
+    )
     |> Repo.one()
+  end
+
+  @doc """
+  Deletes a friendship.
+  """
+  def delete_friendship(friendship_id) do
+    friendship = Repo.get!(Friendship, friendship_id)
+    Repo.delete(friendship)
   end
 
   @doc """

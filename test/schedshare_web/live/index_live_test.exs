@@ -84,33 +84,33 @@ defmodule SchedshareWeb.IndexLiveTest do
     end
   end
 
-  describe "Follow requests" do
-    test "shows pending follow requests section when requests exist", %{conn: conn} do
+  describe "Friend requests" do
+    test "shows pending friend requests section when requests exist", %{conn: conn} do
       user = user_fixture()
-      follower = user_fixture()
-      {:ok, _follow} = Schedshare.Accounts.create_follow(follower.id, user.id)
+      friend = user_fixture()
+      {:ok, _friendship} = Schedshare.Accounts.create_friendship(friend.id, user.id)
 
       conn = log_in_user(conn, user)
       {:ok, lv, html} = live(conn, ~p"/")
 
-      assert html =~ "Pending Follow Requests"
-      assert has_element?(lv, "button", "Approve")
+      assert html =~ "Pending Friend Requests"
+      assert has_element?(lv, "button", "Accept")
       assert has_element?(lv, "button", "Reject")
-      assert html =~ follower.email
+      assert html =~ friend.email
 
       # Test approving a request
       assert lv
-             |> element("button", "Approve")
-             |> render_click() =~ "Follow request approved!"
+             |> element("button", "Accept")
+             |> render_click() =~ "Friend request accepted"
 
       # Verify the request is removed from the list
-      refute render(lv) =~ follower.email
+      refute render(lv) =~ friend.email
     end
 
-    test "handles follow request rejection", %{conn: conn} do
+    test "handles friend request rejection", %{conn: conn} do
       user = user_fixture()
-      follower = user_fixture()
-      {:ok, _follow} = Schedshare.Accounts.create_follow(follower.id, user.id)
+      friend = user_fixture()
+      {:ok, _friendship} = Schedshare.Accounts.create_friendship(friend.id, user.id)
 
       conn = log_in_user(conn, user)
       {:ok, lv, _html} = live(conn, ~p"/")
@@ -118,18 +118,18 @@ defmodule SchedshareWeb.IndexLiveTest do
       # Test rejecting a request
       assert lv
              |> element("button", "Reject")
-             |> render_click() =~ "Follow request rejected"
+             |> render_click() =~ "Friend request rejected"
 
       # Verify the request is removed from the list
-      refute render(lv) =~ follower.email
+      refute render(lv) =~ friend.email
     end
 
-    test "hides pending follow requests section when no requests exist", %{conn: conn} do
+    test "hides pending friend requests section when no requests exist", %{conn: conn} do
       user = user_fixture()
       conn = log_in_user(conn, user)
 
       {:ok, _lv, html} = live(conn, ~p"/")
-      refute html =~ "Pending Follow Requests"
+      refute html =~ "Pending Friend Requests"
     end
   end
 end

@@ -6,13 +6,13 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
     <div id={"pending-requests-#{@id}"}>
       <%= if length(@pending_requests) > 0 do %>
         <div class="mt-4">
-          <h3 class="text-lg font-semibold text-zinc-900">Pending Follow Requests</h3>
+          <h3 class="text-lg font-semibold text-zinc-900">Pending Friend Requests</h3>
           <div class="mt-2 divide-y divide-zinc-200">
             <%= for request <- @pending_requests do %>
               <div class="flex items-center justify-between py-3">
                 <div class="flex items-center gap-3">
-                  <%= if request.follower.profile_picture do %>
-                    <img src={request.follower.profile_picture} alt={request.follower.name || request.follower.email} class="h-8 w-8 rounded-full" />
+                  <%= if request.user.profile_picture do %>
+                    <img src={request.user.profile_picture} alt={request.user.name || request.user.email} class="h-8 w-8 rounded-full" />
                   <% else %>
                     <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                       <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
@@ -20,22 +20,22 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
                   <% end %>
                   <div>
                     <div class="text-sm font-medium text-zinc-900">
-                      <%= request.follower.name || request.follower.email %>
+                      <%= request.user.name || request.user.email %>
                     </div>
-                    <%= if request.follower.name do %>
+                    <%= if request.user.name do %>
                       <div class="text-xs text-zinc-500">
-                        <%= request.follower.email %>
+                        <%= request.user.email %>
                       </div>
                     <% end %>
                   </div>
                 </div>
                 <div class="flex gap-2">
                   <button
-                    phx-click="approve_request"
+                    phx-click="accept_request"
                     phx-value-id={request.id}
                     class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
                   >
-                    Approve
+                    Accept
                   </button>
                   <button
                     phx-click="reject_request"
