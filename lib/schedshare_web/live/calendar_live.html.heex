@@ -50,7 +50,16 @@
                       </div>
                       <span class="text-sm text-zinc-500">
                         <%= if Enum.any?(booking.schedule.user, &(&1.id == @current_user.id)) do %>
-                          You are going
+                          You<%= if length(booking.schedule.user) > 1 do %>
+                            <%= for user <- Enum.reject(booking.schedule.user, &(&1.id == @current_user.id)) do %>
+                              and <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-500 hover:text-zinc-900">
+                                <%= user.name || user.email %>
+                              </.link>
+                            <% end %>
+                            are going together
+                          <% else %>
+                            are going
+                          <% end %>
                         <% else %>
                           <%= for {user, index} <- Enum.with_index(booking.schedule.user) do %>
                             <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-500 hover:text-zinc-900">
