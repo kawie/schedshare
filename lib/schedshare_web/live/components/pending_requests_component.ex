@@ -11,8 +11,8 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
             <%= for request <- @pending_requests do %>
               <div class="flex items-center justify-between py-3">
                 <div class="flex items-center gap-3">
-                  <%= if request.user.profile_picture do %>
-                    <img src={request.user.profile_picture} alt={request.user.name || request.user.email} class="h-8 w-8 rounded-full" />
+                  <%= if request.requested_by.profile_picture do %>
+                    <img src={request.requested_by.profile_picture} alt={request.requested_by.name || request.requested_by.email} class="h-8 w-8 rounded-full" />
                   <% else %>
                     <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                       <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
@@ -20,11 +20,11 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
                   <% end %>
                   <div>
                     <div class="text-sm font-medium text-zinc-900">
-                      <%= request.user.name || request.user.email %>
+                      <%= request.requested_by.name || request.requested_by.email %>
                     </div>
-                    <%= if request.user.name do %>
+                    <%= if request.requested_by.name do %>
                       <div class="text-xs text-zinc-500">
-                        <%= request.user.email %>
+                        <%= request.requested_by.email %>
                       </div>
                     <% end %>
                   </div>
