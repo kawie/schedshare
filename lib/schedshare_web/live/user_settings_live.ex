@@ -370,7 +370,33 @@ defmodule SchedshareWeb.UserSettingsLive do
           Logger.debug("Processing profile picture upload: #{inspect(entry)}")
           # Get the binary data of the uploaded file
           consumed_entries = consume_uploaded_entries(socket, :profile_picture, fn %{path: path}, _entry ->
-            {:ok, File.read!(path)}
+            # Read the file and resize it using Image.avatar
+            binary_data = File.read!(path)
+            case Image.from_binary(binary_data) do
+              {:ok, image} ->
+                case Image.avatar(image, shape: :circle, crop: :attention, size: 200) do
+                  {:ok, resized_image} ->
+                    # Get the file extension from the client type
+                    suffix = case entry.client_type do
+                      "image/jpeg" -> ".jpg"
+                      "image/png" -> ".png"
+                      "image/gif" -> ".gif"
+                      _ -> ".jpg" # default to jpg if unknown
+                    end
+                    case Image.write(resized_image, :memory, suffix: suffix) do
+                      {:ok, binary} -> {:ok, binary}
+                      {:error, reason} ->
+                        Logger.error("Failed to convert image to binary: #{inspect(reason)}")
+                        {:ok, binary_data}
+                    end
+                  {:error, reason} ->
+                    Logger.error("Failed to resize image: #{inspect(reason)}")
+                    {:ok, binary_data}
+                end
+              {:error, reason} ->
+                Logger.error("Failed to load image: #{inspect(reason)}")
+                {:ok, binary_data}
+            end
           end)
 
           # Convert binary data to base64 string
