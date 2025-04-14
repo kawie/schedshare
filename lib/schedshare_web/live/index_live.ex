@@ -71,6 +71,13 @@ defmodule SchedshareWeb.IndexLive do
                 </.link>
 
                 <.link
+                  navigate={~p"/calendar"}
+                  class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                >
+                  View calendar →
+                </.link>
+
+                <.link
                     navigate="/users/settings"
                     class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
                   >

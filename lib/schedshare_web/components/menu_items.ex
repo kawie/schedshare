@@ -12,6 +12,13 @@ defmodule SchedshareWeb.Components.MenuItems do
       </.link>
 
       <.link
+        href={~p"/calendar"}
+        class={@class}
+      >
+        Calendar
+      </.link>
+
+      <.link
         href={~p"/users/settings"}
         class={@class}
       >

@@ -20,7 +20,7 @@ defmodule SchedshareWeb.DatetimeHelper do
   def format_datetime(datetime) when is_nil(datetime), do: "Never"
   def format_datetime(datetime) do
     # Convert to Berlin time for display
-    berlin_time = DateTime.shift_zone!(datetime, "Europe/Berlin")
+    berlin_time = DateTime.shift_zone!(datetime, @timezone)
     Calendar.strftime(berlin_time, "%Y-%m-%d %H:%M")
   end
 
@@ -30,10 +30,17 @@ defmodule SchedshareWeb.DatetimeHelper do
     |> Calendar.strftime("%B %d, %Y at %H:%M")
   end
 
-  def format_weekday_date(datetime) do
-    # Convert to Berlin time for display
-    berlin_time = DateTime.shift_zone!(datetime, "Europe/Berlin")
-    Calendar.strftime(berlin_time, "%A, %B %d")
+  def format_weekday_date(date) when is_struct(date, Date) do
+    # Convert date to datetime at midnight UTC
+    datetime = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+    format_weekday_date(datetime)
+  end
+
+  def format_weekday_date(%DateTime{} = datetime) do
+    # Convert to Berlin time
+    berlin_datetime = DateTime.shift_zone!(datetime, @timezone)
+    # Format as "Monday, April 14"
+    Calendar.strftime(berlin_datetime, "%A, %B %-d")
   end
 
   def format_relative_time(datetime) when is_nil(datetime), do: "Never"

@@ -42,6 +42,7 @@ defmodule SchedshareWeb.Router do
                  {SchedshareWeb.UserAuth, :ensure_authenticated}] do
       live "/profile", ProfileLive, :index
       live "/profile/:id", ProfileLive, :show
+      live "/calendar", CalendarLive, :index
     end
 
     # Protected routes will go here
