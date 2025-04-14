@@ -29,7 +29,12 @@ defmodule SchedshareWeb.UserSettingsLive do
           >
             <.input field={@profile_form[:name]} type="text" label="Name" autocomplete="off" />
             <div phx-drop-target={@uploads.profile_picture.ref}>
-              <.live_file_input upload={@uploads.profile_picture} class="hidden" />
+              <.live_file_input
+                upload={@uploads.profile_picture}
+                class="hidden"
+                accept="image/jpeg,image/png,image/gif"
+                phx-hook="FileInput"
+              />
               <div class="mt-2 flex items-center gap-x-3">
                 <%= if @current_user.profile_picture do %>
                   <img src={@current_user.profile_picture} alt="" class="h-12 w-12 rounded-full" />
@@ -356,27 +361,34 @@ defmodule SchedshareWeb.UserSettingsLive do
   end
 
   def handle_event("update_profile", %{"user" => user_params}, socket) do
+    require Logger
     user = socket.assigns.current_user
 
     profile_params =
       case uploaded_entries(socket, :profile_picture) do
         {[entry], []} ->
+          Logger.debug("Processing profile picture upload: #{inspect(entry)}")
           # Get the binary data of the uploaded file
           consumed_entries = consume_uploaded_entries(socket, :profile_picture, fn %{path: path}, _entry ->
             {:ok, File.read!(path)}
           end)
 
-          # Add the uploaded file data to the params
-          Map.put(user_params, "profile_picture", %{
-            content_type: entry.client_type,
-            path: List.first(consumed_entries)
-          })
+          # Convert binary data to base64 string
+          binary_data = List.first(consumed_entries)
+          base64_data = "data:#{entry.client_type};base64," <> Base.encode64(binary_data)
+
+          # Add the base64 string to the params
+          params = Map.put(user_params, "profile_picture", base64_data)
+          Logger.debug("Profile params with picture: #{inspect(params)}")
+          params
         {[], []} ->
+          Logger.debug("No profile picture uploaded, using existing params: #{inspect(user_params)}")
           user_params
       end
 
     case Accounts.update_user_profile(user, profile_params) do
       {:ok, updated_user} ->
+        Logger.debug("Profile updated successfully: #{inspect(updated_user)}")
         {:noreply,
          socket
          |> assign(:current_user, updated_user)
@@ -384,6 +396,7 @@ defmodule SchedshareWeb.UserSettingsLive do
          |> push_navigate(to: ~p"/users/settings")}
 
       {:error, changeset} ->
+        Logger.error("Failed to update profile: #{inspect(changeset)}")
         {:noreply, assign(socket, profile_form: to_form(changeset))}
     end
   end

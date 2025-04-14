@@ -80,34 +80,9 @@ defmodule Schedshare.Accounts.User do
     end
   end
 
-  defp process_profile_picture(%{content_type: content_type, path: path}) when content_type in ["image/jpeg", "image/png", "image/gif"] do
-    try do
-      # Create a temporary file with the correct extension
-      ext = content_type |> String.split("/") |> List.last()
-      tmp_path = Path.join(System.tmp_dir!(), "#{:crypto.strong_rand_bytes(16) |> Base.encode16()}.#{ext}")
-      File.write!(tmp_path, path)
-
-      # Process the image with Mogrify
-      result =
-        tmp_path
-        |> Mogrify.open()
-        |> Mogrify.resize_to_limit("200x200")
-        |> Mogrify.save(in_place: true)
-
-      # Read the processed image and convert to base64
-      processed_binary = File.read!(result.path)
-      base64_data = "data:#{content_type};base64," <> Base.encode64(processed_binary)
-
-      # Clean up temporary file
-      File.rm!(tmp_path)
-
-      {:ok, base64_data}
-    rescue
-      e ->
-        require Logger
-        Logger.error("Error processing profile picture: #{inspect(e)}")
-        :error
-    end
+  defp process_profile_picture(base64_data) when is_binary(base64_data) do
+    # If it's already a base64 string, just return it
+    {:ok, base64_data}
   end
   defp process_profile_picture(_), do: :error
 

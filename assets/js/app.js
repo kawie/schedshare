@@ -26,9 +26,29 @@ import topbar from "../vendor/topbar"
 import "./menu"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+
+let Hooks = {
+  FileInput: {
+    mounted() {
+      this.el.addEventListener("change", e => {
+        if (e.target.files.length > 0) {
+          this.pushEvent("validate", {})
+        }
+      })
+    }
+  }
+}
+
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
+  params: {_csrf_token: csrfToken},
+  uploaders: {
+    profile_picture: {
+      maxFileSize: 5_000_000, // 5MB
+      accept: [".jpg", ".jpeg", ".png", ".gif"]
+    }
+  },
+  hooks: Hooks
 })
 
 // Show progress bar on live navigation and form submits
