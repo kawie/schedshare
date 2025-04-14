@@ -59,10 +59,16 @@ defmodule SchedshareWeb.Router do
 
     scope "/dev" do
       pipe_through [:browser, :admin]
-
-      live_dashboard "/dashboard", metrics: SchedshareWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  # Enable LiveDashboard for admin users (both development and production)
+  import Phoenix.LiveDashboard.Router
+
+  scope "/admin" do
+    pipe_through [:browser, :admin]
+    live_dashboard "/dashboard", metrics: SchedshareWeb.Telemetry
   end
 
   ## Authentication routes

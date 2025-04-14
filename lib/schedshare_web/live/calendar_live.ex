@@ -1,6 +1,6 @@
 defmodule SchedshareWeb.CalendarLive do
   use SchedshareWeb, :live_view
-  alias Schedshare.{Accounts, Scheduling}
+  alias Schedshare.Scheduling
   alias SchedshareWeb.DatetimeHelper
   require Logger
 
