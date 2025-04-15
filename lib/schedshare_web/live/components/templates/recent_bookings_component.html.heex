@@ -10,7 +10,7 @@
                 <img src={booking.schedule.user.profile_picture} alt={booking.schedule.user.name || booking.schedule.user.email} class="h-8 w-8 rounded-full" />
               <% else %>
                 <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                  <.icon name="hero-user" class="w-4 h-4 text-text-secondary-light dark:text-text-secondary-dark" />
                 </div>
               <% end %>
               <span class="text-sm font-medium"><%= booking.schedule.user.name || booking.schedule.user.email %></span>
