@@ -5,13 +5,15 @@ defmodule SchedshareWeb.UserLoginLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Log in to account
+        <span class="text-text-primary-light dark:text-text-primary-dark">Log in to account</span>
         <:subtitle>
-          Don't have an account?
-          <.link navigate={~p"/users/register"} class="font-semibold text-brand hover:underline">
-            Sign up
-          </.link>
-          for an account now.
+          <span class="text-text-secondary-light dark:text-text-secondary-dark">
+            Don't have an account?
+            <.link navigate={~p"/users/register"} class="font-semibold text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80">
+              Sign up
+            </.link>
+            for an account now.
+          </span>
         </:subtitle>
       </.header>
 
@@ -21,12 +23,12 @@ defmodule SchedshareWeb.UserLoginLive do
 
         <:actions>
           <.input field={@form[:remember_me]} type="checkbox" label="Keep me logged in" />
-          <.link href={~p"/users/reset_password"} class="text-sm font-semibold">
+          <.link href={~p"/users/reset_password"} class="text-sm font-semibold text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">
             Forgot your password?
           </.link>
         </:actions>
         <:actions>
-          <.button phx-disable-with="Logging in..." class="w-full">
+          <.button phx-disable-with="Logging in..." class="w-full bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
             Log in <span aria-hidden="true">→</span>
           </.button>
         </:actions>

@@ -15,9 +15,54 @@ module.exports = {
     extend: {
       colors: {
         brand: "#FD4F00",
+        // Text colors
+        text: {
+          primary: {
+            light: "#18181B", // zinc-900
+            dark: "#FFFFFF"
+          },
+          secondary: {
+            light: "#71717A", // zinc-500
+            dark: "#A1A1AA" // zinc-400
+          },
+          tertiary: {
+            light: "#A1A1AA", // zinc-400
+            dark: "#71717A" // zinc-500
+          }
+        },
+        // Background colors
+        background: {
+          light: "#FFFFFF",
+          dark: "#18181B" // zinc-900
+        },
+        surface: {
+          light: "#FFFFFF",
+          dark: "#27272A" // zinc-800
+        },
+        // Interactive elements
+        interactive: {
+            light: "#18181B", // zinc-900
+            dark: "#FFFFFF",
+            primary: {
+              light: "#059669", // emerald-600
+              dark: "#10B981" // emerald-500
+            }
+        },
+        // Status colors
+        status: {
+          success: {
+            light: "#065F46", // emerald-800
+            dark: "#059669" // emerald-600
+          },
+          successBg: {
+            light: "#D1FAE5", // emerald-100
+            dark: "#064E3B" // emerald-900
+          }
+        }
       }
     },
   },
+  darkMode: 'media',
   plugins: [
     require("@tailwindcss/forms"),
     // Allows prefixing tailwind classes with LiveView classes to add rules
