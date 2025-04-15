@@ -81,34 +81,9 @@
       <% end %>
     </div>
 
-    <%= if @is_self and length(@pending_requests) > 0 do %>
-      <div>
-        <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Pending Friend Requests</h2>
-        <div class="mt-4 divide-y divide-surface-light dark:divide-surface-dark">
-          <%= for request <- @pending_requests do %>
-            <div class="flex items-center justify-between py-4">
-              <div class="flex items-center">
-                <.link navigate={~p"/profile/#{request.requested_by.id}"} class="text-sm text-text-primary-light dark:text-text-primary-dark hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark">
-                  <%= request.requested_by.email %>
-                </.link>
-              </div>
-              <div class="flex space-x-2">
-                <button phx-click="accept_request" phx-value-id={request.id} class="rounded-md bg-interactive-primary-light dark:bg-interactive-primary-dark px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-interactive-primary-light dark:hover:bg-interactive-primary-dark">
-                  Accept
-                </button>
-                <button phx-click="reject_request" phx-value-id={request.id} class="rounded-md bg-surface-light dark:bg-surface-dark px-2 py-1 text-xs font-semibold text-text-primary-light dark:text-text-primary-dark shadow-sm hover:bg-surface-light dark:hover:bg-surface-dark">
-                  Reject
-                </button>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
     <div>
       <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Friends (<%= length(@friends) %>)</h2>
-      <div class="mt-4 divide-y divide-surface-light dark:divide-surface-dark">
+      <div class="mt-4 divide-y divide-border-light dark:divide-border-dark">
         <%= for friend <- @friends do %>
           <div class="py-3">
             <.link navigate={~p"/profile/#{friend.id}"} class="flex items-center gap-3 text-sm text-text-primary-light dark:text-text-primary-dark hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark">
@@ -132,17 +107,17 @@
     </div>
 
     <%= if @schedule || @is_self do %>
-      <div class="mt-8 border-t border-surface-light dark:border-surface-dark pt-8" data-test-id="schedule-section">
+      <div class="mt-8 border-t border-border-light dark:border-border-dark pt-8" data-test-id="schedule-section">
         <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Schedule</h2>
         <%= if @schedule do %>
           <%= if @schedule.bookings && length(@schedule.bookings) > 0 do %>
-            <div class="mt-4 divide-y divide-surface-light dark:divide-surface-dark" data-test-id="booking-list">
+            <div class="mt-4 divide-y divide-border-light dark:divide-border-dark" data-test-id="booking-list">
               <%= for booking <- @schedule.bookings do %>
                 <div class="py-6">
                   <div class="flex items-center justify-between">
                     <div>
                       <h3 class="text-base font-semibold text-text-primary-light dark:text-text-primary-dark">
-                        <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark inline-flex items-center gap-1">
+                        <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-interactive-primary-light dark:hover:text-interactive-primary-dark inline-flex items-center gap-1">
                           <%= booking.course_title %>
                           <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                         </a>
@@ -153,8 +128,8 @@
                     </div>
                     <span class={[
                       "rounded-full px-2 py-1 text-xs font-medium",
-                      booking.status == "CANCELLED" && "bg-red-100 text-red-800",
-                      booking.status != "CANCELLED" && "bg-interactive-primary-light dark:bg-interactive-primary-dark text-interactive-primary-dark dark:text-interactive-primary-light"
+                      booking.status == "CANCELLED" && "bg-status-errorBg-light dark:bg-status-errorBg-dark text-status-error-light dark:text-status-error-dark",
+                      booking.status != "CANCELLED" && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark"
                     ]} data-test-id={"status-#{String.downcase(booking.status)}"}>
                       <%= booking.status %>
                     </span>
