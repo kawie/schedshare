@@ -107,6 +107,12 @@ defmodule SchedshareWeb.IndexLive do
                         >
                           LiveDashboard →
                         </.link>
+                        <.link
+                          navigate="/admin/errors"
+                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
+                        >
+                          Error Tracker →
+                        </.link>
                         <%= if Application.get_env(:schedshare, :dev_routes) do %>
                           <.link
                             navigate="/dev/mailbox"

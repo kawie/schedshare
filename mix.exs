@@ -61,7 +61,8 @@ defmodule Schedshare.MixProject do
       {:bandit, "~> 1.5"},
       {:resend, "~> 0.4.4"},
       {:tzdata, "~> 1.1"},
-      {:image, "~> 0.59"}
+      {:image, "~> 0.59"},
+      {:error_tracker, "~> 0.6"}
     ]
   end
 

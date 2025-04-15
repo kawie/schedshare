@@ -3,6 +3,9 @@ defmodule SchedshareWeb.Router do
 
   import SchedshareWeb.UserAuth
 
+  # ## Pipelines
+  # Define the common pipelines used across different scopes
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -21,6 +24,8 @@ defmodule SchedshareWeb.Router do
     plug SchedshareWeb.Plugs.EnsureAdmin
   end
 
+  # ## Public Routes
+  # Routes accessible to all users, including unauthenticated ones
   scope "/", SchedshareWeb do
     pipe_through [:browser]
 
@@ -34,45 +39,8 @@ defmodule SchedshareWeb.Router do
     delete "/users/log_out", UserSessionController, :delete
   end
 
-  scope "/", SchedshareWeb do
-    pipe_through [:browser, :require_authenticated_user]
-
-    live_session :authenticated_user,
-      on_mount: [{SchedshareWeb.UserAuth, :mount_current_user},
-                 {SchedshareWeb.UserAuth, :ensure_authenticated}] do
-      live "/profile", ProfileLive, :index
-      live "/profile/:id", ProfileLive, :show
-      live "/calendar", CalendarLive, :index
-    end
-
-    # Protected routes will go here
-  end
-
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:schedshare, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
-
-    scope "/dev" do
-      pipe_through [:browser, :admin]
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
-  end
-
-  # Enable LiveDashboard for admin users (both development and production)
-  import Phoenix.LiveDashboard.Router
-
-  scope "/admin" do
-    pipe_through [:browser, :admin]
-    live_dashboard "/dashboard", metrics: SchedshareWeb.Telemetry
-  end
-
-  ## Authentication routes
-
+  # ## Authentication Routes
+  # Routes for user authentication and registration
   scope "/", SchedshareWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
@@ -87,13 +55,47 @@ defmodule SchedshareWeb.Router do
     post "/users/log_in", UserSessionController, :create
   end
 
+  # ## Protected Routes
+  # Routes that require authentication
   scope "/", SchedshareWeb do
     pipe_through [:browser, :require_authenticated_user]
+
+    live_session :authenticated_user,
+      on_mount: [{SchedshareWeb.UserAuth, :mount_current_user},
+                 {SchedshareWeb.UserAuth, :ensure_authenticated}] do
+      live "/profile", ProfileLive, :index
+      live "/profile/:id", ProfileLive, :show
+      live "/calendar", CalendarLive, :index
+    end
 
     live_session :require_authenticated_user,
       on_mount: [{SchedshareWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
+  end
+
+  # ## Development Routes
+  # Routes only available in development environment
+  if Application.compile_env(:schedshare, :dev_routes) do
+    import Phoenix.LiveDashboard.Router
+
+    scope "/dev" do
+      pipe_through [:browser, :admin]
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  # ## Admin Routes
+  # Routes accessible only to admin users
+  import Phoenix.LiveDashboard.Router
+  use ErrorTracker.Web, :router
+
+  scope "/admin" do
+    pipe_through [:browser, :admin]
+    live_dashboard "/dashboard", metrics: SchedshareWeb.Telemetry
+    # ErrorTracker provides a dashboard for monitoring and debugging application errors
+    # Accessible at /admin/errors
+    error_tracker_dashboard "/errors"
   end
 end
