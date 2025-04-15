@@ -8,13 +8,15 @@ defmodule SchedshareWeb.UserRegistrationLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Register for an account
+        <span class="text-text-primary-light dark:text-text-primary-dark">Register for an account</span>
         <:subtitle>
-          Already registered?
-          <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
-            Log in
-          </.link>
-          to your account now.
+          <span class="text-text-secondary-light dark:text-text-secondary-dark">
+            Already registered?
+            <.link navigate={~p"/users/log_in"} class="font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-secondary-light/80 dark:hover:text-interactive-secondary-dark/80">
+              Log in
+            </.link>
+            to your account now.
+          </span>
         </:subtitle>
       </.header>
 
@@ -27,7 +29,7 @@ defmodule SchedshareWeb.UserRegistrationLive do
         action={~p"/users/log_in?_action=registered"}
         method="post"
       >
-        <.error :if={@check_errors}>
+        <.error :if={@check_errors} class="text-text-secondary-light dark:text-text-secondary-dark">
           Oops, something went wrong! Please check the errors below.
         </.error>
 
@@ -35,7 +37,9 @@ defmodule SchedshareWeb.UserRegistrationLive do
         <.input field={@form[:password]} type="password" label="Password" required />
 
         <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
+          <.button phx-disable-with="Creating account..." class="w-full bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">
+            Create an account
+          </.button>
         </:actions>
       </.simple_form>
     </div>

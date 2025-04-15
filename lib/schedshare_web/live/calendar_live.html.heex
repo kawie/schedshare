@@ -10,27 +10,27 @@
     <%= if map_size(@grouped_bookings) > 0 do %>
       <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 gap-8">
         <%= for date <- dates_in_range(@today, @end_date) do %>
-          <div class="border border-zinc-200 rounded-lg p-4">
-            <h2 class="text-lg font-semibold text-zinc-900">
+          <div class="border border-border-light dark:border-border-dark rounded-lg p-4 bg-surface-light dark:bg-surface-dark">
+            <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">
               <%= DatetimeHelper.format_weekday_date(date) %>
             </h2>
             
             <%= if bookings = Map.get(@grouped_bookings, date, []) do %>
               <div class="mt-4 space-y-4">
                 <%= for booking <- bookings do %>
-                  <div class="border-t border-zinc-100 pt-4">
+                  <div class="border-t border-border-light dark:border-border-dark pt-4">
                     <div class="flex items-start justify-between">
                       <div>
-                        <p class="text-sm text-zinc-500">
+                        <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                           <%= DatetimeHelper.format_time(booking.start_datetime_utc) %> - 
                           <%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
                         </p>
-                        <h3 class="mt-1 text-base font-semibold text-zinc-900">
-                          <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-emerald-600">
+                        <h3 class="mt-1 text-base font-semibold text-text-primary-light dark:text-text-primary-dark">
+                          <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-interactive-primary-light dark:hover:text-interactive-primary-dark">
                             <%= booking.course_title %>
                           </a>
                         </h3>
-                        <p class="text-sm text-zinc-500">
+                        <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                           <%= booking.venue_name %>
                         </p>
                       </div>
@@ -40,19 +40,19 @@
                       <div class="flex -space-x-2">
                         <%= for user <- booking.schedule.user do %>
                           <%= if user.profile_picture do %>
-                            <img src={user.profile_picture} alt={user.name || user.email} class="h-6 w-6 rounded-full border-2 border-white" />
+                            <img src={user.profile_picture} alt={user.name || user.email} class="h-6 w-6 rounded-full border-2 border-surface-light dark:border-surface-dark" />
                           <% else %>
-                            <div class="h-6 w-6 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
-                              <.icon name="hero-user" class="w-3 h-3 text-gray-500" />
+                            <div class="h-6 w-6 rounded-full border-2 border-surface-light dark:border-surface-dark bg-surface-light dark:bg-surface-dark flex items-center justify-center">
+                              <.icon name="hero-user" class="w-3 h-3 text-text-secondary-light dark:text-text-secondary-dark" />
                             </div>
                           <% end %>
                         <% end %>
                       </div>
-                      <span class="text-sm text-zinc-500">
+                      <span class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                         <%= if Enum.any?(booking.schedule.user, &(&1.id == @current_user.id)) do %>
                           You<%= if length(booking.schedule.user) > 1 do %>
                             <%= for user <- Enum.reject(booking.schedule.user, &(&1.id == @current_user.id)) do %>
-                              and <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-500 hover:text-zinc-900">
+                              and <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark">
                                 <%= user.name || user.email %>
                               </.link>
                             <% end %>
@@ -62,7 +62,7 @@
                           <% end %>
                         <% else %>
                           <%= for {user, index} <- Enum.with_index(booking.schedule.user) do %>
-                            <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-zinc-500 hover:text-zinc-900">
+                            <.link navigate={~p"/profile/#{user.id}"} class="text-sm text-text-secondary-light dark:text-text-secondary-dark hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark">
                               <%= user.name || user.email %><%= if index < length(booking.schedule.user) - 1, do: ", " %>
                             </.link>
                           <% end %>
@@ -74,14 +74,14 @@
                 <% end %>
               </div>
             <% else %>
-              <p class="mt-4 text-sm text-zinc-500">No bookings for this day</p>
+              <p class="mt-4 text-sm text-text-secondary-light dark:text-text-secondary-dark">No bookings for this day</p>
             <% end %>
           </div>
         <% end %>
       </div>
     <% else %>
       <div class="mt-8 text-center">
-        <p class="text-sm text-zinc-500">No bookings found in the next 14 days</p>
+        <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">No bookings found in the next 14 days</p>
       </div>
     <% end %>
   </div>

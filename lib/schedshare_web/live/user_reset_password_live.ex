@@ -6,7 +6,9 @@ defmodule SchedshareWeb.UserResetPasswordLive do
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-sm">
-      <.header class="text-center">Reset Password</.header>
+      <.header class="text-center">
+        <span class="text-text-primary-light dark:text-text-primary-dark">Reset Password</span>
+      </.header>
 
       <.simple_form
         for={@form}
@@ -14,7 +16,7 @@ defmodule SchedshareWeb.UserResetPasswordLive do
         phx-submit="reset_password"
         phx-change="validate"
       >
-        <.error :if={@form.errors != []}>
+        <.error :if={@form.errors != []} class="text-text-secondary-light dark:text-text-secondary-dark">
           Oops, something went wrong! Please check the errors below.
         </.error>
 
@@ -26,13 +28,15 @@ defmodule SchedshareWeb.UserResetPasswordLive do
           required
         />
         <:actions>
-          <.button phx-disable-with="Resetting..." class="w-full">Reset Password</.button>
+          <.button phx-disable-with="Resetting..." class="w-full bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
+            Reset Password
+          </.button>
         </:actions>
       </.simple_form>
 
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/register"}>Register</.link>
-        | <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="text-center text-sm mt-4 text-text-secondary-light dark:text-text-secondary-dark">
+        <.link href={~p"/users/register"} class="text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">Register</.link>
+        | <.link href={~p"/users/log_in"} class="text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">Log in</.link>
       </p>
     </div>
     """

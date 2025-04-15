@@ -7,21 +7,27 @@ defmodule SchedshareWeb.UserForgotPasswordLive do
     ~H"""
     <div class="mx-auto max-w-sm">
       <.header class="text-center">
-        Forgot your password?
-        <:subtitle>We'll send a password reset link to your inbox</:subtitle>
+        <span class="text-text-primary-light dark:text-text-primary-dark">
+          Forgot your password?
+        </span>
+        <:subtitle>
+          <span class="text-text-secondary-light dark:text-text-secondary-dark">
+            We'll send a password reset link to your inbox
+          </span>
+        </:subtitle>
       </.header>
 
       <.simple_form for={@form} id="reset_password_form" phx-submit="send_email">
         <.input field={@form[:email]} type="email" placeholder="Email" required />
         <:actions>
-          <.button phx-disable-with="Sending..." class="w-full">
+          <.button phx-disable-with="Sending..." class="w-full bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
             Send password reset instructions
           </.button>
         </:actions>
       </.simple_form>
-      <p class="text-center text-sm mt-4">
-        <.link href={~p"/users/register"}>Register</.link>
-        | <.link href={~p"/users/log_in"}>Log in</.link>
+      <p class="text-center text-sm mt-4 text-text-secondary-light dark:text-text-secondary-dark">
+        <.link href={~p"/users/register"} class="text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">Register</.link>
+        | <.link href={~p"/users/log_in"} class="text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">Log in</.link>
       </p>
     </div>
     """

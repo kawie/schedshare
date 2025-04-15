@@ -7,6 +7,24 @@ defmodule SchedshareWeb.IndexLive do
   alias SchedshareWeb.Live.Components.AdminUsersComponent
   alias SchedshareWeb.Live.Components.WelcomeSectionComponent
 
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the link"
+  attr :variant, :atom, default: :default, values: [:default, :primary]
+  slot :inner_block, required: true
+  def styled_link(assigns) do
+    ~H"""
+    <.link
+      {@rest}
+      class={[
+        "text-sm font-semibold leading-6",
+        @variant == :primary && "text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80",
+        @variant == :default && "text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
+      ]}
+    >
+      <%= render_slot(@inner_block) %>
+    </.link>
+    """
+  end
+
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
@@ -53,36 +71,27 @@ defmodule SchedshareWeb.IndexLive do
 
   def render(assigns) do
     ~H"""
-    <div class="h-full bg-white">
+    <div class="h-full bg-background-light dark:bg-background-dark">
       <div class="mx-auto max-w-2xl py-4 px-4 sm:px-6 lg:px-8">
         <div class="">
           <%= if @current_user do %>
             <div class="mt-10">
-              <h2 class="text-2xl font-semibold text-zinc-900">
+              <h2 class="text-2xl font-semibold text-text-primary-light dark:text-text-primary-dark">
                 Welcome back, <%= @current_user.name || @current_user.email %>!
               </h2>
 
               <div class="mt-4 flex flex-col gap-4">
-                <.link
-                  navigate={~p"/profile"}
-                  class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                >
+                <.styled_link navigate={~p"/profile"} variant={:primary}>
                   View my schedule →
-                </.link>
+                </.styled_link>
 
-                <.link
-                  navigate={~p"/calendar"}
-                  class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                >
+                <.styled_link navigate={~p"/calendar"}>
                   View calendar →
-                </.link>
+                </.styled_link>
 
-                <.link
-                    navigate="/users/settings"
-                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-                  >
-                    Settings →
-                </.link>
+                <.styled_link navigate="/users/settings">
+                  Settings →
+                </.styled_link>
 
                 <.live_component
                   module={PendingRequestsComponent}
@@ -98,28 +107,19 @@ defmodule SchedshareWeb.IndexLive do
 
                 <div class="mt-4 flex flex-col gap-4">
                   <%= if Accounts.is_admin?(@current_user) do %>
-                    <div class="mt-6 border-t border-zinc-200 pt-6">
-                      <h3 class="text-lg font-semibold text-zinc-900">Admin Tools</h3>
+                    <div class="mt-6 border-t border-border-light dark:border-border-dark pt-6">
+                      <h3 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Admin Tools</h3>
                       <div class="mt-4 flex flex-col gap-3">
-                        <.link
-                          navigate="/admin/dashboard"
-                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                        >
+                        <.styled_link navigate="/admin/dashboard">
                           LiveDashboard →
-                        </.link>
-                        <.link
-                          navigate="/admin/errors"
-                          class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                        >
+                        </.styled_link>
+                        <.styled_link navigate="/admin/errors">
                           Error Tracker →
-                        </.link>
+                        </.styled_link>
                         <%= if Application.get_env(:schedshare, :dev_routes) do %>
-                          <.link
-                            navigate="/dev/mailbox"
-                            class="text-sm font-semibold leading-6 text-emerald-600 hover:text-emerald-500"
-                          >
+                          <.styled_link navigate="/dev/mailbox">
                             Email Preview →
-                          </.link>
+                          </.styled_link>
                         <% end %>
 
                         <.live_component
@@ -131,13 +131,9 @@ defmodule SchedshareWeb.IndexLive do
                     </div>
                   <% end %>
 
-                  <.link
-                    href="/users/log_out"
-                    method="delete"
-                    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-                  >
+                  <.styled_link href="/users/log_out" method="delete">
                     Log out →
-                  </.link>
+                  </.styled_link>
                 </div>
               </div>
             </div>

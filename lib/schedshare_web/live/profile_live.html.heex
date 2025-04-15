@@ -5,19 +5,19 @@
         <%= if @user.profile_picture do %>
           <img src={@user.profile_picture} alt={@user.name || @user.email} class="h-16 w-16 rounded-full" />
         <% else %>
-          <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-            <.icon name="hero-user" class="w-8 h-8 text-gray-500" />
+          <div class="h-16 w-16 rounded-full bg-surface-light dark:bg-surface-dark flex items-center justify-center">
+            <.icon name="hero-user" class="w-8 h-8 text-text-secondary-light dark:text-text-secondary-dark" />
           </div>
         <% end %>
         <div>
-          <h1 class="text-2xl font-bold text-zinc-900">
+          <h1 class="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">
             <%= if @is_self do %>
               My Profile
             <% else %>
               <%= @user.name || @user.email %>
             <% end %>
           </h1>
-          <p class="mt-1 text-sm text-zinc-500">
+          <p class="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
             <%= @user.email %> · Joined <%= Calendar.strftime(@user.inserted_at, "%B %d, %Y") %>
             <%= if @has_credentials do %>
               · <%= if @last_sync do %>
@@ -35,15 +35,15 @@
           <div>
             <%= cond do %>
               <% @is_friend -> %>
-                <button phx-click="remove_friend" class="rounded-md bg-zinc-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-500">
+                <button phx-click="remove_friend" class="rounded-md bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark shadow-sm hover:bg-surface-light dark:hover:bg-surface-dark">
                   Remove Friend
                 </button>
               <% @has_pending_request -> %>
-                <span class="rounded-md bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-600">
+                <span class="rounded-md bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">
                   Friend Request Pending
                 </span>
               <% true -> %>
-                <button phx-click="add_friend" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
+                <button phx-click="add_friend" class="rounded-md bg-interactive-primary-light dark:bg-interactive-primary-dark px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-interactive-primary-light dark:hover:bg-interactive-primary-dark">
                   Add Friend
                 </button>
             <% end %>
@@ -56,8 +56,8 @@
                   disabled={@is_self}
                   class={[
                     "rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm",
-                    @is_self && "opacity-50 cursor-not-allowed bg-zinc-400",
-                    !@is_self && "bg-red-600 hover:bg-red-500"
+                    @is_self && "opacity-50 cursor-not-allowed bg-surface-light dark:bg-surface-dark",
+                    !@is_self && "bg-status-error-light dark:bg-status-error-dark hover:bg-status-error-light dark:hover:bg-status-error-dark"
                   ]}
                 >
                   Remove Admin
@@ -68,8 +68,8 @@
                   disabled={@is_self}
                   class={[
                     "rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm",
-                    @is_self && "opacity-50 cursor-not-allowed bg-zinc-400",
-                    !@is_self && "bg-blue-600 hover:bg-blue-500"
+                    @is_self && "opacity-50 cursor-not-allowed bg-surface-light dark:bg-surface-dark",
+                    !@is_self && "bg-status-success-light dark:bg-status-success-dark hover:bg-status-success-light dark:hover:bg-status-success-dark"
                   ]}
                 >
                   Make Admin
@@ -81,48 +81,23 @@
       <% end %>
     </div>
 
-    <%= if @is_self and length(@pending_requests) > 0 do %>
-      <div>
-        <h2 class="text-lg font-semibold text-zinc-900">Pending Friend Requests</h2>
-        <div class="mt-4 divide-y divide-zinc-200">
-          <%= for request <- @pending_requests do %>
-            <div class="flex items-center justify-between py-4">
-              <div class="flex items-center">
-                <.link navigate={~p"/profile/#{request.requested_by.id}"} class="text-sm text-zinc-900 hover:text-zinc-600">
-                  <%= request.requested_by.email %>
-                </.link>
-              </div>
-              <div class="flex space-x-2">
-                <button phx-click="accept_request" phx-value-id={request.id} class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500">
-                  Accept
-                </button>
-                <button phx-click="reject_request" phx-value-id={request.id} class="rounded-md bg-zinc-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-zinc-500">
-                  Reject
-                </button>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
     <div>
-      <h2 class="text-lg font-semibold text-zinc-900">Friends (<%= length(@friends) %>)</h2>
-      <div class="mt-4 divide-y divide-zinc-200">
+      <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Friends (<%= length(@friends) %>)</h2>
+      <div class="mt-4 divide-y divide-border-light dark:divide-border-dark">
         <%= for friend <- @friends do %>
           <div class="py-3">
-            <.link navigate={~p"/profile/#{friend.id}"} class="flex items-center gap-3 text-sm text-zinc-900 hover:text-zinc-600">
+            <.link navigate={~p"/profile/#{friend.id}"} class="flex items-center gap-3 text-sm text-text-primary-light dark:text-text-primary-dark hover:text-interactive-secondary-light dark:hover:text-interactive-secondary-dark">
               <%= if friend.profile_picture do %>
                 <img src={friend.profile_picture} alt={friend.name || friend.email} class="h-8 w-8 rounded-full" />
               <% else %>
-                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                <div class="h-8 w-8 rounded-full bg-surface-light dark:bg-surface-dark flex items-center justify-center">
+                  <.icon name="hero-user" class="w-4 h-4 text-text-secondary-light dark:text-text-secondary-dark" />
                 </div>
               <% end %>
               <div>
                 <div><%= friend.name || friend.email %></div>
                 <%= if friend.name do %>
-                  <div class="text-xs text-zinc-500"><%= friend.email %></div>
+                  <div class="text-xs text-text-secondary-light dark:text-text-secondary-dark"><%= friend.email %></div>
                 <% end %>
               </div>
             </.link>
@@ -132,34 +107,34 @@
     </div>
 
     <%= if @schedule || @is_self do %>
-      <div class="mt-8 border-t border-zinc-200 pt-8" data-test-id="schedule-section">
-        <h2 class="text-lg font-semibold text-zinc-900">Schedule</h2>
+      <div class="mt-8 border-t border-border-light dark:border-border-dark pt-8" data-test-id="schedule-section">
+        <h2 class="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Schedule</h2>
         <%= if @schedule do %>
           <%= if @schedule.bookings && length(@schedule.bookings) > 0 do %>
-            <div class="mt-4 divide-y divide-zinc-200" data-test-id="booking-list">
+            <div class="mt-4 divide-y divide-border-light dark:divide-border-dark" data-test-id="booking-list">
               <%= for booking <- @schedule.bookings do %>
                 <div class="py-6">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h3 class="text-base font-semibold text-zinc-900">
-                        <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-emerald-600 inline-flex items-center gap-1">
+                      <h3 class="text-base font-semibold text-text-primary-light dark:text-text-primary-dark">
+                        <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-interactive-primary-light dark:hover:text-interactive-primary-dark inline-flex items-center gap-1">
                           <%= booking.course_title %>
                           <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
                         </a>
                       </h3>
-                      <p class="mt-1 text-sm text-zinc-500">
+                      <p class="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
                         with <%= booking.teacher_name %>
                       </p>
                     </div>
                     <span class={[
                       "rounded-full px-2 py-1 text-xs font-medium",
-                      booking.status == "CANCELLED" && "bg-red-100 text-red-800",
-                      booking.status != "CANCELLED" && "bg-emerald-100 text-emerald-800"
+                      booking.status == "CANCELLED" && "bg-status-errorBg-light dark:bg-status-errorBg-dark text-status-error-light dark:text-status-error-dark",
+                      booking.status != "CANCELLED" && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark"
                     ]} data-test-id={"status-#{String.downcase(booking.status)}"}>
                       <%= booking.status %>
                     </span>
                   </div>
-                  <div class="mt-2 text-sm text-zinc-500">
+                  <div class="mt-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
                     <p>
                       <%= DatetimeHelper.format_weekday_date(booking.start_datetime_utc) %>
                     </p>
@@ -167,26 +142,26 @@
                       <%= DatetimeHelper.format_time(booking.start_datetime_utc) %> - 
                       <%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
                     </p>
-                    <p class="text-xs text-zinc-400">
+                    <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">
                       ID: <%= booking.external_id %>
                     </p>
                   </div>
                   <div class="mt-2">
-                    <p class="text-sm text-zinc-500">
+                    <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                       <%= booking.venue_name %>
                     </p>
-                    <p class="text-sm text-zinc-500">
+                    <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                       <%= booking.venue_full_address %>
                     </p>
                   </div>
                   <div class="mt-2 flex flex-wrap gap-2">
                     <%= for type <- booking.course_types || [] do %>
-                      <span class="rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">
+                      <span class="rounded-full bg-surface-light dark:bg-surface-dark px-2 py-1 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         <%= type %>
                       </span>
                     <% end %>
                     <%= if booking.is_online do %>
-                      <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                      <span class="rounded-full bg-surface-light dark:bg-surface-dark px-2 py-1 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Online
                       </span>
                     <% end %>
@@ -232,33 +207,33 @@
                   %>
                   <%= if current_user_in_course do %>
                     <div class="mt-2">
-                      <p class="text-sm text-zinc-600 inline-flex items-center">
-                        <.icon name="hero-face-smile" class="mr-1 h-4 w-4 text-emerald-600" />
+                      <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark inline-flex items-center">
+                        <.icon name="hero-face-smile" class="mr-1 h-4 w-4 text-interactive-secondary-light dark:text-interactive-secondary-dark" />
                         You're going together
                       </p>
                     </div>
                   <% end %>
                   <%= if length(display_users) > 0 do %>
                     <div class="mt-2">
-                      <p class="text-sm text-zinc-600">
+                      <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                         <span class="flex items-center gap-2">
-                          <.icon name="hero-face-smile" class="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                          <.icon name="hero-face-smile" class="h-4 w-4 text-interactive-secondary-light dark:text-interactive-secondary-dark flex-shrink-0" />
                           <span><%= if @is_self do %>Going with:<% else %>Also going with:<% end %></span>
                         </span>
                         <div class="mt-2 flex flex-col gap-2">
                           <%= for user <- display_users do %>
-                            <.link navigate={~p"/profile/#{user.id}"} class="flex items-center gap-3 text-emerald-600 hover:text-emerald-500">
+                            <.link navigate={~p"/profile/#{user.id}"} class="flex items-center gap-3 text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-primary-light dark:hover:text-interactive-primary-dark">
                               <%= if user.profile_picture do %>
                                 <img src={user.profile_picture} alt={user.name || user.email} class="h-8 w-8 rounded-full" />
                               <% else %>
-                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                                <div class="h-8 w-8 rounded-full bg-surface-light dark:bg-surface-dark flex items-center justify-center">
+                                  <.icon name="hero-user" class="w-4 h-4 text-text-secondary-light dark:text-text-secondary-dark" />
                                 </div>
                               <% end %>
                               <div>
                                 <div><%= user.name || user.email %></div>
                                 <%= if user.name do %>
-                                  <div class="text-xs text-zinc-500"><%= user.email %></div>
+                                  <div class="text-xs text-text-secondary-light dark:text-text-secondary-dark"><%= user.email %></div>
                                 <% end %>
                               </div>
                             </.link>
@@ -271,20 +246,20 @@
               <% end %>
             </div>
           <% else %>
-            <p class="mt-4 text-sm text-zinc-500">No bookings yet.</p>
+            <p class="mt-4 text-sm text-text-secondary-light dark:text-text-secondary-dark">No bookings yet.</p>
           <% end %>
         <% else %>
           <%= if @is_self do %>
-            <div class="mt-4 rounded-md bg-yellow-50 p-4" data-test-id="no-schedule-warning">
+            <div class="mt-4 rounded-md bg-surface-light dark:bg-surface-dark p-4" data-test-id="no-schedule-warning">
               <div class="flex">
                 <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                   </svg>
                 </div>
                 <div class="ml-3">
-                  <h3 class="text-sm font-medium text-yellow-800">No Schedule Found</h3>
-                  <p class="mt-2 text-sm text-yellow-700">
+                  <h3 class="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">No Schedule Found</h3>
+                  <p class="mt-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
                     Your schedule will be created automatically when you connect your account.
                   </p>
                 </div>

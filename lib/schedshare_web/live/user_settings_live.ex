@@ -9,15 +9,19 @@ defmodule SchedshareWeb.UserSettingsLive do
   def render(assigns) do
     ~H"""
     <.header class="text-center">
-      Account Settings
-      <:subtitle>Manage your account settings and profile</:subtitle>
+      <span class="text-text-primary-light dark:text-text-primary-dark">Account Settings</span>
+      <:subtitle>
+        <span class="text-text-secondary-light dark:text-text-secondary-dark">Manage your account settings and profile</span>
+      </:subtitle>
     </.header>
 
-    <div class="space-y-12 divide-y max-w-2xl mx-auto">
+    <div class="space-y-12 divide-y divide-border-light dark:divide-border-dark max-w-2xl mx-auto">
       <div class="mt-10">
         <.header>
-          Profile Settings
-          <:subtitle>Update your name and profile picture</:subtitle>
+          <span class="text-text-primary-light dark:text-text-primary-dark">Profile Settings</span>
+          <:subtitle>
+            <span class="text-text-secondary-light dark:text-text-secondary-dark">Update your name and profile picture</span>
+          </:subtitle>
         </.header>
 
         <div class="mt-6">
@@ -39,11 +43,11 @@ defmodule SchedshareWeb.UserSettingsLive do
                 <%= if @current_user.profile_picture do %>
                   <img src={@current_user.profile_picture} alt="" class="h-12 w-12 rounded-full" />
                 <% else %>
-                  <div class="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                    <.icon name="hero-user" class="w-6 h-6 text-gray-300" />
+                  <div class="h-12 w-12 rounded-full bg-surface-light dark:bg-surface-dark flex items-center justify-center">
+                    <.icon name="hero-user" class="w-6 h-6 text-text-secondary-light dark:text-text-secondary-dark" />
                   </div>
                 <% end %>
-                <button type="button" phx-click={JS.dispatch("click", to: "##{@uploads.profile_picture.ref}")} class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <button type="button" phx-click={JS.dispatch("click", to: "##{@uploads.profile_picture.ref}")} class="rounded-md bg-surface-light dark:bg-surface-dark px-2.5 py-1.5 text-sm font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark shadow-sm ring-1 ring-inset ring-surface-light dark:ring-surface-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                   Change
                 </button>
               </div>
@@ -53,26 +57,26 @@ defmodule SchedshareWeb.UserSettingsLive do
                   <div class="flex items-center gap-x-3">
                     <.live_img_preview entry={entry} class="h-12 w-12 rounded-full object-cover" />
                     <div class="flex items-center gap-x-2">
-                      <div class="text-sm font-semibold text-gray-900"><%= entry.client_name %></div>
-                      <button type="button" phx-click="cancel-upload" phx-value-ref={entry.ref} class="rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                      <div class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark"><%= entry.client_name %></div>
+                      <button type="button" phx-click="cancel-upload" phx-value-ref={entry.ref} class="rounded-full p-1 text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                         <.icon name="hero-x-mark" class="w-5 h-5" />
                       </button>
                     </div>
                   </div>
 
-                  <div :for={err <- upload_errors(@uploads.profile_picture, entry)} class="mt-2 text-sm text-red-600">
+                  <div :for={err <- upload_errors(@uploads.profile_picture, entry)} class="mt-2 text-sm text-status-error-light dark:text-status-error-dark">
                     <%= Phoenix.Naming.humanize(err) %>
                   </div>
                 </div>
               <% end %>
 
-              <div :for={err <- upload_errors(@uploads.profile_picture)} class="mt-2 text-sm text-red-600">
+              <div :for={err <- upload_errors(@uploads.profile_picture)} class="mt-2 text-sm text-status-error-light dark:text-status-error-dark">
                 <%= Phoenix.Naming.humanize(err) %>
               </div>
             </div>
 
             <:actions>
-              <.button phx-disable-with="Saving...">Save Profile</.button>
+              <.button phx-disable-with="Saving..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Profile</.button>
             </:actions>
           </.simple_form>
         </div>
@@ -80,8 +84,10 @@ defmodule SchedshareWeb.UserSettingsLive do
 
       <div class="mt-10">
         <.header>
-          API Credentials
-          <:subtitle>Connect your account to schedule providers</:subtitle>
+          <span class="text-text-primary-light dark:text-text-primary-dark">API Credentials</span>
+          <:subtitle>
+            <span class="text-text-secondary-light dark:text-text-secondary-dark">Connect your account to schedule providers</span>
+          </:subtitle>
         </.header>
 
         <div class="mt-6">
@@ -93,11 +99,11 @@ defmodule SchedshareWeb.UserSettingsLive do
               <.input field={f[:password]} type="password" label="Password" />
             </div>
             <div class="flex items-center gap-4">
-              <.button type="submit">Save Credentials</.button>
-              <.button type="button" phx-click="test_connection" disabled={!@has_credentials}>
+              <.button type="submit" class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Credentials</.button>
+              <.button type="button" phx-click="test_connection" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                 Test Connection
               </.button>
-              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials}>
+              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                 <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
               </.button>
             </div>
@@ -108,20 +114,20 @@ defmodule SchedshareWeb.UserSettingsLive do
               <div class="flex items-center gap-2">
                 <span class={[
                   "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-                  @api_credential.connection_status == "connected" && "bg-emerald-100 text-emerald-800",
-                  @api_credential.connection_status == "error" && "bg-red-100 text-red-800",
-                  @api_credential.connection_status == "disconnected" && "bg-yellow-100 text-yellow-800"
+                  @api_credential.connection_status == "connected" && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark",
+                  @api_credential.connection_status == "disconnected" && "bg-surface-light dark:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark",
+                  @api_credential.connection_status == "error" && "bg-status-errorBg-light dark:bg-status-errorBg-dark text-status-error-light dark:text-status-error-dark"
                 ]}>
                   <%= @api_credential.connection_status %>
                 </span>
                 <%= if @api_credential.last_sync_at do %>
-                  <span class="text-sm text-zinc-500">
+                  <span class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                     Last synced <%= DatetimeHelper.format_datetime_pretty(@api_credential.last_sync_at) %>
                   </span>
                 <% end %>
               </div>
               <%= if @api_credential.connection_error do %>
-                <p class="mt-2 text-sm text-red-600"><%= @api_credential.connection_error %></p>
+                <p class="mt-2 text-sm text-status-error-light dark:text-status-error-dark"><%= @api_credential.connection_error %></p>
               <% end %>
             </div>
           <% end %>
@@ -147,7 +153,7 @@ defmodule SchedshareWeb.UserSettingsLive do
             autocomplete="current-password"
           />
           <:actions>
-            <.button phx-disable-with="Changing...">Change Email</.button>
+            <.button phx-disable-with="Changing..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Change Email</.button>
           </:actions>
         </.simple_form>
       </div>
@@ -192,7 +198,7 @@ defmodule SchedshareWeb.UserSettingsLive do
             autocomplete="current-password"
           />
           <:actions>
-            <.button phx-disable-with="Changing...">Change Password</.button>
+            <.button phx-disable-with="Changing..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Change Password</.button>
           </:actions>
         </.simple_form>
       </div>
