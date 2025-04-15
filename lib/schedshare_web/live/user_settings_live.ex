@@ -15,7 +15,7 @@ defmodule SchedshareWeb.UserSettingsLive do
       </:subtitle>
     </.header>
 
-    <div class="space-y-12 divide-y max-w-2xl mx-auto">
+    <div class="space-y-12 divide-y divide-border-light dark:divide-border-dark max-w-2xl mx-auto">
       <div class="mt-10">
         <.header>
           <span class="text-text-primary-light dark:text-text-primary-dark">Profile Settings</span>
@@ -115,13 +115,13 @@ defmodule SchedshareWeb.UserSettingsLive do
                 <span class={[
                   "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
                   @api_credential.connection_status == "connected" && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark",
-                  @api_credential.connection_status == "disconnected" && "bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-text-primary-dark",
+                  @api_credential.connection_status == "disconnected" && "bg-surface-light dark:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark",
                   @api_credential.connection_status == "error" && "bg-status-errorBg-light dark:bg-status-errorBg-dark text-status-error-light dark:text-status-error-dark"
                 ]}>
                   <%= @api_credential.connection_status %>
                 </span>
                 <%= if @api_credential.last_sync_at do %>
-                  <span class="text-sm text-zinc-500">
+                  <span class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
                     Last synced <%= DatetimeHelper.format_datetime_pretty(@api_credential.last_sync_at) %>
                   </span>
                 <% end %>

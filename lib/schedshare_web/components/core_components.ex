@@ -232,7 +232,7 @@ defmodule SchedshareWeb.CoreComponents do
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 rounded-lg bg-interactive-light dark:bg-interactive-dark hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80 py-2 px-3",
-        "text-sm font-semibold leading-6 text-interactive-dark dark:text-interactive-light active:text-interactive-dark/80 dark:active:text-interactive-light/80",
+        "text-sm font-semibold leading-6 text-interactive-dark dark:text-interactive-light",
         @class
       ]}
       {@rest}
@@ -318,7 +318,7 @@ defmodule SchedshareWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class="rounded border-border-light dark:border-border-dark text-interactive-light dark:text-interactive-dark focus:ring-0"
+          class="rounded border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark checked:bg-surface-light dark:checked:bg-surface-dark checked:text-interactive-light dark:checked:text-interactive-dark focus:ring-0"
           {@rest}
         />
         {@label}
@@ -431,10 +431,10 @@ defmodule SchedshareWeb.CoreComponents do
     ~H"""
     <header class={[@actions != [] && "flex items-center justify-between gap-6", @class]}>
       <div>
-        <h1 class="text-lg font-semibold leading-8 text-zinc-800">
+        <h1 class="text-lg font-semibold leading-8 text-text-primary-light dark:text-text-primary-dark">
           {render_slot(@inner_block)}
         </h1>
-        <p :if={@subtitle != []} class="mt-2 text-sm leading-6 text-zinc-600">
+        <p :if={@subtitle != []} class="mt-2 text-sm leading-6 text-text-secondary-light dark:text-text-secondary-dark">
           {render_slot(@subtitle)}
         </p>
       </div>
@@ -477,7 +477,7 @@ defmodule SchedshareWeb.CoreComponents do
     ~H"""
     <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
       <table class="w-[40rem] mt-11 sm:w-full">
-        <thead class="text-sm text-left leading-6 text-zinc-500">
+        <thead class="text-sm text-left leading-6 text-text-secondary-light dark:text-text-secondary-dark">
           <tr>
             <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal">{col[:label]}</th>
             <th :if={@action != []} class="relative p-0 pb-4">
@@ -488,27 +488,27 @@ defmodule SchedshareWeb.CoreComponents do
         <tbody
           id={@id}
           phx-update={match?(%Phoenix.LiveView.LiveStream{}, @rows) && "stream"}
-          class="relative divide-y divide-zinc-100 border-t border-zinc-200 text-sm leading-6 text-zinc-700"
+          class="relative divide-y divide-border-light dark:divide-border-dark border-t border-border-light dark:border-border-dark text-sm leading-6 text-text-primary-light dark:text-text-primary-dark"
         >
-          <tr :for={row <- @rows} id={@row_id && @row_id.(row)} class="group hover:bg-zinc-50">
+          <tr :for={row <- @rows} id={@row_id && @row_id.(row)} class="group hover:bg-surface-light dark:hover:bg-surface-dark">
             <td
               :for={{col, i} <- Enum.with_index(@col)}
               phx-click={@row_click && @row_click.(row)}
               class={["relative p-0", @row_click && "hover:cursor-pointer"]}
             >
               <div class="block py-4 pr-6">
-                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
-                <span class={["relative", i == 0 && "font-semibold text-zinc-900"]}>
+                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-surface-light sm:rounded-l-xl" />
+                <span class={["relative", i == 0 && "font-semibold text-text-primary-light"]}>
                   {render_slot(col, @row_item.(row))}
                 </span>
               </div>
             </td>
             <td :if={@action != []} class="relative w-14 p-0">
               <div class="relative whitespace-nowrap py-4 text-right text-sm font-medium">
-                <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
+                <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-surface-light sm:rounded-r-xl" />
                 <span
                   :for={action <- @action}
-                  class="relative ml-4 font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  class="relative ml-4 font-semibold leading-6 text-text-primary-light hover:text-text-primary-dark"
                 >
                   {render_slot(action, @row_item.(row))}
                 </span>
