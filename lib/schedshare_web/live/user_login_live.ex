@@ -9,7 +9,7 @@ defmodule SchedshareWeb.UserLoginLive do
         <:subtitle>
           <span class="text-text-secondary-light dark:text-text-secondary-dark">
             Don't have an account?
-            <.link navigate={~p"/users/register"} class="font-semibold text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80">
+            <.link navigate={~p"/users/register"} class="font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-secondary-light/80 dark:hover:text-interactive-secondary-dark/80">
               Sign up
             </.link>
             for an account now.
@@ -23,12 +23,12 @@ defmodule SchedshareWeb.UserLoginLive do
 
         <:actions>
           <.input field={@form[:remember_me]} type="checkbox" label="Keep me logged in" />
-          <.link href={~p"/users/reset_password"} class="text-sm font-semibold text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80">
+          <.link href={~p"/users/reset_password"} class="text-sm font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-secondary-light/80 dark:hover:text-interactive-secondary-dark/80">
             Forgot your password?
           </.link>
         </:actions>
         <:actions>
-          <.button phx-disable-with="Logging in..." class="w-full bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
+          <.button phx-disable-with="Logging in..." class="w-full bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">
             Log in <span aria-hidden="true">→</span>
           </.button>
         </:actions>

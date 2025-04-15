@@ -12,7 +12,7 @@ defmodule SchedshareWeb.UserRegistrationLive do
         <:subtitle>
           <span class="text-text-secondary-light dark:text-text-secondary-dark">
             Already registered?
-            <.link navigate={~p"/users/log_in"} class="font-semibold text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80">
+            <.link navigate={~p"/users/log_in"} class="font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-secondary-light/80 dark:hover:text-interactive-secondary-dark/80">
               Log in
             </.link>
             to your account now.
@@ -37,7 +37,7 @@ defmodule SchedshareWeb.UserRegistrationLive do
         <.input field={@form[:password]} type="password" label="Password" required />
 
         <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
+          <.button phx-disable-with="Creating account..." class="w-full bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">
             Create an account
           </.button>
         </:actions>

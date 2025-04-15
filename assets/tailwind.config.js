@@ -41,11 +41,13 @@ module.exports = {
         },
         // Interactive elements
         interactive: {
-          light: "#18181B", // zinc-900
-          dark: "#FFFFFF",
           primary: {
             light: "#059669", // emerald-600
             dark: "#10B981" // emerald-500
+          },
+          secondary: {
+            light: "#18181B", // zinc-900
+            dark: "#FFFFFF"
           }
         },
         // Status colors

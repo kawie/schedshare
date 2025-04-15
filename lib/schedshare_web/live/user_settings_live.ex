@@ -47,7 +47,7 @@ defmodule SchedshareWeb.UserSettingsLive do
                     <.icon name="hero-user" class="w-6 h-6 text-text-secondary-light dark:text-text-secondary-dark" />
                   </div>
                 <% end %>
-                <button type="button" phx-click={JS.dispatch("click", to: "##{@uploads.profile_picture.ref}")} class="rounded-md bg-surface-light dark:bg-surface-dark px-2.5 py-1.5 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark shadow-sm ring-1 ring-inset ring-surface-light dark:ring-surface-dark hover:bg-surface-light dark:hover:bg-surface-dark">
+                <button type="button" phx-click={JS.dispatch("click", to: "##{@uploads.profile_picture.ref}")} class="rounded-md bg-surface-light dark:bg-surface-dark px-2.5 py-1.5 text-sm font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark shadow-sm ring-1 ring-inset ring-surface-light dark:ring-surface-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                   Change
                 </button>
               </div>
@@ -58,7 +58,7 @@ defmodule SchedshareWeb.UserSettingsLive do
                     <.live_img_preview entry={entry} class="h-12 w-12 rounded-full object-cover" />
                     <div class="flex items-center gap-x-2">
                       <div class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark"><%= entry.client_name %></div>
-                      <button type="button" phx-click="cancel-upload" phx-value-ref={entry.ref} class="rounded-full p-1 text-text-secondary-light dark:text-text-secondary-dark hover:bg-surface-light dark:hover:bg-surface-dark">
+                      <button type="button" phx-click="cancel-upload" phx-value-ref={entry.ref} class="rounded-full p-1 text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                         <.icon name="hero-x-mark" class="w-5 h-5" />
                       </button>
                     </div>
@@ -76,7 +76,7 @@ defmodule SchedshareWeb.UserSettingsLive do
             </div>
 
             <:actions>
-              <.button phx-disable-with="Saving..." class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">Save Profile</.button>
+              <.button phx-disable-with="Saving..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Profile</.button>
             </:actions>
           </.simple_form>
         </div>
@@ -99,11 +99,11 @@ defmodule SchedshareWeb.UserSettingsLive do
               <.input field={f[:password]} type="password" label="Password" />
             </div>
             <div class="flex items-center gap-4">
-              <.button type="submit" class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">Save Credentials</.button>
-              <.button type="button" phx-click="test_connection" disabled={!@has_credentials} class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
+              <.button type="submit" class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Credentials</.button>
+              <.button type="button" phx-click="test_connection" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                 Test Connection
               </.button>
-              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials} class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">
+              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                 <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
               </.button>
             </div>
@@ -127,7 +127,7 @@ defmodule SchedshareWeb.UserSettingsLive do
                 <% end %>
               </div>
               <%= if @api_credential.connection_error do %>
-                <p class="mt-2 text-sm text-red-600"><%= @api_credential.connection_error %></p>
+                <p class="mt-2 text-sm text-status-error-light dark:text-status-error-dark"><%= @api_credential.connection_error %></p>
               <% end %>
             </div>
           <% end %>
@@ -153,7 +153,7 @@ defmodule SchedshareWeb.UserSettingsLive do
             autocomplete="current-password"
           />
           <:actions>
-            <.button phx-disable-with="Changing..." class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">Change Email</.button>
+            <.button phx-disable-with="Changing..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Change Email</.button>
           </:actions>
         </.simple_form>
       </div>
@@ -198,7 +198,7 @@ defmodule SchedshareWeb.UserSettingsLive do
             autocomplete="current-password"
           />
           <:actions>
-            <.button phx-disable-with="Changing..." class="bg-interactive-light dark:bg-interactive-dark text-interactive-dark dark:text-interactive-light hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80">Change Password</.button>
+            <.button phx-disable-with="Changing..." class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Change Password</.button>
           </:actions>
         </.simple_form>
       </div>

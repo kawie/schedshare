@@ -13,13 +13,13 @@ defmodule SchedshareWeb.Live.Components.WelcomeSectionComponent do
       <div class="mt-10 flex items-center justify-center gap-x-6">
         <.link
           navigate="/users/register"
-          class="rounded-lg bg-interactive-light dark:bg-interactive-dark px-3.5 py-2.5 text-sm font-semibold text-interactive-dark dark:text-interactive-light shadow-sm hover:bg-interactive-light/80 dark:hover:bg-interactive-dark/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-light/50 dark:focus-visible:outline-interactive-dark/50"
+          class="rounded-lg bg-interactive-primary-light dark:bg-interactive-primary-dark px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary-light/50 dark:focus-visible:outline-interactive-primary-dark/50"
         >
           Register
         </.link>
         <.link
           navigate="/users/log_in"
-          class="text-sm font-semibold leading-6 text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
+          class="text-sm font-semibold leading-6 text-interactive-secondary-light dark:text-interactive-secondary-dark hover:text-interactive-secondary-light/80 dark:hover:text-interactive-secondary-dark/80"
         >
           Log in <span aria-hidden="true">→</span>
         </.link>

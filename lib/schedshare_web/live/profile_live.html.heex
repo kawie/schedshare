@@ -57,7 +57,7 @@
                   class={[
                     "rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm",
                     @is_self && "opacity-50 cursor-not-allowed bg-surface-light dark:bg-surface-dark",
-                    !@is_self && "bg-red-600 hover:bg-red-500"
+                    !@is_self && "bg-status-error-light dark:bg-status-error-dark hover:bg-status-error-light dark:hover:bg-status-error-dark"
                   ]}
                 >
                   Remove Admin
@@ -69,7 +69,7 @@
                   class={[
                     "rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm",
                     @is_self && "opacity-50 cursor-not-allowed bg-surface-light dark:bg-surface-dark",
-                    !@is_self && "bg-blue-600 hover:bg-blue-500"
+                    !@is_self && "bg-status-success-light dark:bg-status-success-dark hover:bg-status-success-light dark:hover:bg-status-success-dark"
                   ]}
                 >
                   Make Admin
