@@ -28,13 +28,27 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_authenticate(username, password)
     else
       Logger.debug("Making real API authentication request")
-      post("/api/v7/auth/token", %{
-        grant_type: "password",
-        username: username,
-        password: password,
-        client_id: System.get_env("API_CLIENT_ID"),
-        client_secret: System.get_env("API_CLIENT_SECRET")
-      })
+      try do
+        response = post("/api/v7/auth/token", %{
+          grant_type: "password",
+          username: username,
+          password: password,
+          client_id: System.get_env("API_CLIENT_ID"),
+          client_secret: System.get_env("API_CLIENT_SECRET")
+        })
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise "Authentication failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Authentication request failed: #{inspect(reason)}"
+        end
+      rescue
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{username: username})
+          {:error, e}
+      end
     end
   end
 
@@ -50,12 +64,26 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_refresh_token(refresh_token)
     else
       Logger.debug("Making real API token refresh request")
-      post("/api/v7/auth/token", %{
-        grant_type: "refresh_token",
-        refresh_token: refresh_token,
-        client_id: System.get_env("API_CLIENT_ID"),
-        client_secret: System.get_env("API_CLIENT_SECRET")
-      })
+      try do
+        response = post("/api/v7/auth/token", %{
+          grant_type: "refresh_token",
+          refresh_token: refresh_token,
+          client_id: System.get_env("API_CLIENT_ID"),
+          client_secret: System.get_env("API_CLIENT_SECRET")
+        })
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise "Token refresh failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Token refresh request failed: #{inspect(reason)}"
+        end
+      rescue
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, e}
+      end
     end
   end
 
@@ -71,7 +99,24 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_fetch_schedule(access_token)
     else
       Logger.debug("Making real API schedule request")
-      get("/api/v6/bookings?type=schedule&page=1&pageSize=100", headers: [{"authorization", "Bearer #{access_token}"}])
+      try do
+        response = get("/api/v6/bookings?type=schedule&page=1&pageSize=100", headers: [{"authorization", "Bearer #{access_token}"}])
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise RuntimeError, message: "Schedule fetch failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Schedule fetch request failed: #{inspect(reason)}"
+        end
+      rescue
+        e in RuntimeError ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, e}
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, RuntimeError.exception(message: "Unexpected error: #{inspect(e)}")}
+      end
     end
   end
 
@@ -87,7 +132,21 @@ defmodule Schedshare.Scheduling.HTTPClient do
       mock_get_customer_info(access_token)
     else
       Logger.debug("Making real API customer info request")
-      get("/api/v6/customers/me", headers: [{"authorization", "Bearer #{access_token}"}])
+      try do
+        response = get("/api/v6/customers/me", headers: [{"authorization", "Bearer #{access_token}"}])
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise "Customer info fetch failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Customer info fetch request failed: #{inspect(reason)}"
+        end
+      rescue
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, e}
+      end
     end
   end
 

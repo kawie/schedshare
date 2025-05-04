@@ -169,7 +169,7 @@ defmodule Schedshare.Scheduling.Sync do
         {:error, error_message}
 
       {:error, error} ->
-        error_message = "Failed to fetch schedule: #{error}"
+        error_message = "Failed to fetch schedule: #{inspect(error)}"
         Schedshare.Scheduling.update_api_credential(credential, %{
           connection_status: "error",
           connection_error: error_message
