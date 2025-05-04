@@ -5,6 +5,7 @@ defmodule Schedshare.Scheduling do
 
   import Ecto.Query, warn: false
   alias Schedshare.Repo
+  alias Phoenix.PubSub
 
   alias Schedshare.Scheduling.Schedule
   alias Schedshare.Scheduling.Booking
@@ -84,25 +85,43 @@ defmodule Schedshare.Scheduling do
   Creates a booking.
   """
   def create_booking(attrs \\ %{}) do
-    %Booking{}
+    case %Booking{}
     |> Booking.changeset(attrs)
-    |> Repo.insert()
+    |> Repo.insert() do
+      {:ok, booking} = result ->
+        # Broadcast the new booking to the user's channel
+        PubSub.broadcast(Schedshare.PubSub, "user_bookings:#{booking.schedule.user_id}", {:booking_created, booking})
+        result
+      error -> error
+    end
   end
 
   @doc """
   Updates a booking.
   """
   def update_booking(%Booking{} = booking, attrs) do
-    booking
+    case booking
     |> Booking.changeset(attrs)
-    |> Repo.update()
+    |> Repo.update() do
+      {:ok, updated_booking} = result ->
+        # Broadcast the updated booking to the user's channel
+        PubSub.broadcast(Schedshare.PubSub, "user_bookings:#{booking.schedule.user_id}", {:booking_updated, updated_booking})
+        result
+      error -> error
+    end
   end
 
   @doc """
   Deletes a booking.
   """
   def delete_booking(%Booking{} = booking) do
-    Repo.delete(booking)
+    case Repo.delete(booking) do
+      {:ok, _} = result ->
+        # Broadcast the deleted booking to the user's channel
+        PubSub.broadcast(Schedshare.PubSub, "user_bookings:#{booking.schedule.user_id}", {:booking_deleted, booking.id})
+        result
+      error -> error
+    end
   end
 
   @doc """

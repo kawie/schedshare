@@ -27,7 +27,7 @@ defmodule SchedshareWeb.IndexLive do
         end
       {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings)}
     else
-      {:ok, assign(socket, page_title: "SchedShare")}
+      {:ok, assign(socket, page_title: "SchedShare", pending_requests: [], recent_bookings: [])}
     end
   end
 

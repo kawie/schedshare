@@ -1,6 +1,34 @@
 defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
   use SchedshareWeb, :live_component
   alias Schedshare.Accounts
+  alias Phoenix.PubSub
+
+  def mount(socket) do
+    socket = if connected?(socket) and socket.assigns[:current_user] do
+      # Subscribe to friend request updates for the current user
+      PubSub.subscribe(Schedshare.PubSub, "friend_requests:#{socket.assigns.current_user.id}")
+      # Ensure we have the initial list of pending requests
+      assign(socket, pending_requests: socket.assigns.pending_requests || [])
+    else
+      assign(socket, pending_requests: [])
+    end
+    {:ok, socket}
+  end
+
+  def handle_info({:friend_request_created, request}, socket) do
+    # Add the new request to the list if it's not already there
+    if Enum.any?(socket.assigns.pending_requests, &(&1.id == request.id)) do
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, pending_requests: [request | socket.assigns.pending_requests])}
+    end
+  end
+
+  def handle_info({:friend_request_deleted, request_id}, socket) do
+    # Remove the request from the list
+    updated_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == request_id))
+    {:noreply, assign(socket, pending_requests: updated_requests)}
+  end
 
   def render(assigns) do
     ~H"""

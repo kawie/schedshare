@@ -1,6 +1,43 @@
 defmodule SchedshareWeb.Live.Components.RecentBookingsComponent do
   use SchedshareWeb, :live_component
   alias SchedshareWeb.DatetimeHelper
+  alias Schedshare.Scheduling
+  alias Phoenix.PubSub
+
+  def mount(socket) do
+    if connected?(socket) and socket.assigns[:current_user] do
+      # Subscribe to booking updates for the current user
+      PubSub.subscribe(Schedshare.PubSub, "user_bookings:#{socket.assigns.current_user.id}")
+    end
+    {:ok, socket}
+  end
+
+  def handle_info({:booking_created, booking}, socket) do
+    # Add the new booking to the list if it's not already there
+    if Enum.any?(socket.assigns.recent_bookings, &(&1.id == booking.id)) do
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, recent_bookings: [booking | socket.assigns.recent_bookings])}
+    end
+  end
+
+  def handle_info({:booking_updated, booking}, socket) do
+    # Update the booking in the list if it exists
+    updated_bookings = Enum.map(socket.assigns.recent_bookings, fn existing_booking ->
+      if existing_booking.id == booking.id do
+        booking
+      else
+        existing_booking
+      end
+    end)
+    {:noreply, assign(socket, recent_bookings: updated_bookings)}
+  end
+
+  def handle_info({:booking_deleted, booking_id}, socket) do
+    # Remove the booking from the list
+    updated_bookings = Enum.reject(socket.assigns.recent_bookings, &(&1.id == booking_id))
+    {:noreply, assign(socket, recent_bookings: updated_bookings)}
+  end
 
   def render(assigns) do
     ~H"""

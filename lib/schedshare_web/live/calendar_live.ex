@@ -2,10 +2,11 @@ defmodule SchedshareWeb.CalendarLive do
   use SchedshareWeb, :live_view
   alias Schedshare.Scheduling
   alias SchedshareWeb.DatetimeHelper
+  alias Phoenix.PubSub
   require Logger
 
   def mount(_params, _session, socket) do
-    if socket.assigns[:current_user] do
+    if connected?(socket) and socket.assigns[:current_user] do
       # Get the next 14 days in Berlin time
       today = DateTime.utc_now() |> DateTime.to_date() |> DateTime.new!(~T[00:00:00], "Europe/Berlin")
       end_date = DateTime.add(today, 13 * 24 * 60 * 60, :second)
@@ -15,6 +16,9 @@ defmodule SchedshareWeb.CalendarLive do
 
       # Group bookings by date
       grouped_bookings = group_bookings_by_date(bookings)
+
+      # Subscribe to booking updates for the current user
+      PubSub.subscribe(Schedshare.PubSub, "user_bookings:#{socket.assigns.current_user.id}")
 
       {:ok,
        assign(socket,
@@ -27,6 +31,55 @@ defmodule SchedshareWeb.CalendarLive do
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
     end
+  end
+
+  def handle_info({:booking_created, booking}, socket) do
+    # Check if the booking is within our date range
+    booking_date = booking.start_datetime_utc
+      |> DatetimeHelper.to_berlin()
+      |> DateTime.to_date()
+
+    if Date.compare(booking_date, socket.assigns.today) != :lt and
+       Date.compare(booking_date, socket.assigns.end_date) != :gt do
+      # Add the new booking to our list
+      updated_bookings = [booking | socket.assigns.bookings]
+      updated_grouped_bookings = group_bookings_by_date(updated_bookings)
+
+      {:noreply, assign(socket,
+        bookings: updated_bookings,
+        grouped_bookings: updated_grouped_bookings
+      )}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:booking_updated, booking}, socket) do
+    # Update the booking in our list
+    updated_bookings = Enum.map(socket.assigns.bookings, fn existing_booking ->
+      if existing_booking.id == booking.id do
+        booking
+      else
+        existing_booking
+      end
+    end)
+    updated_grouped_bookings = group_bookings_by_date(updated_bookings)
+
+    {:noreply, assign(socket,
+      bookings: updated_bookings,
+      grouped_bookings: updated_grouped_bookings
+    )}
+  end
+
+  def handle_info({:booking_deleted, booking_id}, socket) do
+    # Remove the booking from our list
+    updated_bookings = Enum.reject(socket.assigns.bookings, &(&1.id == booking_id))
+    updated_grouped_bookings = group_bookings_by_date(updated_bookings)
+
+    {:noreply, assign(socket,
+      bookings: updated_bookings,
+      grouped_bookings: updated_grouped_bookings
+    )}
   end
 
   defp get_bookings_for_date_range(user_id, start_date, end_date) do

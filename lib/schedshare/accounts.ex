@@ -6,6 +6,7 @@ defmodule Schedshare.Accounts do
   import Ecto.Query, warn: false
   alias Schedshare.Repo
   require Logger
+  alias Phoenix.PubSub
 
   alias Schedshare.Accounts.{User, UserToken, UserNotifier, Friendship}
 
@@ -389,13 +390,20 @@ defmodule Schedshare.Accounts do
   Creates a friendship request from one user to another.
   """
   def create_friendship(user1_id, user2_id) do
-    %Friendship{}
+    case %Friendship{}
     |> Friendship.changeset(%{
       user1_id: min(user1_id, user2_id),
       user2_id: max(user1_id, user2_id),
       requested_by_id: user1_id
     })
-    |> Repo.insert()
+    |> Repo.insert() do
+      {:ok, friendship} = result ->
+        # Broadcast the new friend request to both users
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{user1_id}", {:friend_request_created, friendship})
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{user2_id}", {:friend_request_created, friendship})
+        result
+      error -> error
+    end
   end
 
   @doc """
@@ -403,9 +411,16 @@ defmodule Schedshare.Accounts do
   """
   def accept_friendship(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    friendship
+    case friendship
     |> Friendship.changeset(%{status: :accepted})
-    |> Repo.update()
+    |> Repo.update() do
+      {:ok, updated_friendship} = result ->
+        # Broadcast the accepted friendship to both users
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user1_id}", {:friend_request_deleted, friendship.id})
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user2_id}", {:friend_request_deleted, friendship.id})
+        result
+      error -> error
+    end
   end
 
   @doc """
@@ -413,9 +428,16 @@ defmodule Schedshare.Accounts do
   """
   def reject_friendship(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    friendship
+    case friendship
     |> Friendship.changeset(%{status: :rejected})
-    |> Repo.update()
+    |> Repo.update() do
+      {:ok, _} = result ->
+        # Broadcast the rejected friendship to both users
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user1_id}", {:friend_request_deleted, friendship.id})
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user2_id}", {:friend_request_deleted, friendship.id})
+        result
+      error -> error
+    end
   end
 
   @doc """
@@ -471,7 +493,14 @@ defmodule Schedshare.Accounts do
   """
   def delete_friendship(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    Repo.delete(friendship)
+    case Repo.delete(friendship) do
+      {:ok, _} = result ->
+        # Broadcast the deleted friendship to both users
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user1_id}", {:friend_request_deleted, friendship.id})
+        PubSub.broadcast(Schedshare.PubSub, "friend_requests:#{friendship.user2_id}", {:friend_request_deleted, friendship.id})
+        result
+      error -> error
+    end
   end
 
   @doc """
