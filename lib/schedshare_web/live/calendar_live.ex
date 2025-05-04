@@ -7,18 +7,14 @@ defmodule SchedshareWeb.CalendarLive do
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       # Get the next 14 days in Berlin time
-      today = DateTime.utc_now() |> DatetimeHelper.to_berlin()
+      today = DateTime.utc_now() |> DateTime.to_date() |> DateTime.new!(~T[00:00:00], "Europe/Berlin")
       end_date = DateTime.add(today, 13 * 24 * 60 * 60, :second)
-
-      Logger.debug("Calendar: Fetching bookings from #{inspect(today)} to #{inspect(end_date)}")
 
       # Get all bookings for the date range
       bookings = get_bookings_for_date_range(socket.assigns.current_user.id, today, end_date)
-      Logger.debug("Calendar: Found #{length(bookings)} bookings")
 
       # Group bookings by date
       grouped_bookings = group_bookings_by_date(bookings)
-      Logger.debug("Calendar: Grouped into #{map_size(grouped_bookings)} days")
 
       {:ok,
        assign(socket,
@@ -38,43 +34,39 @@ defmodule SchedshareWeb.CalendarLive do
     user_bookings =
       case Scheduling.list_user_schedules(user_id) do
         [schedule] ->
-          Logger.debug("Calendar: Found #{length(schedule.bookings)} bookings for user #{user_id}")
-          # Preload the schedule and user associations
           schedule.bookings
           |> Enum.map(fn booking ->
             booking
             |> Schedshare.Repo.preload([:schedule])
             |> Schedshare.Repo.preload(schedule: [:user])
           end)
-        _ ->
-          Logger.debug("Calendar: No schedule found for user #{user_id}")
-          []
+        _ -> []
       end
 
     # Get friends' bookings
     friend_bookings = Scheduling.list_recent_friend_bookings(user_id)
-    Logger.debug("Calendar: Found #{length(friend_bookings)} bookings from friends")
 
     # Combine and filter bookings
-    all_bookings = user_bookings ++ friend_bookings
-    Logger.debug("Calendar: Total bookings before filtering: #{length(all_bookings)}")
-
-    filtered_bookings = all_bookings
+    (user_bookings ++ friend_bookings)
     |> Enum.reject(&(&1.status in ["DELETED", "CANCELLED"]))
     |> Enum.filter(fn booking ->
-      # Convert booking dates to Berlin time for comparison
-      booking_start = booking.start_datetime_utc |> DatetimeHelper.to_berlin()
-      booking_start >= start_date and booking_start <= end_date
-    end)
+      booking_date = booking.start_datetime_utc
+        |> DatetimeHelper.to_berlin()
+        |> DateTime.to_date()
 
-    Logger.debug("Calendar: Total bookings after filtering: #{length(filtered_bookings)}")
-    filtered_bookings
+      range_start_date = DateTime.to_date(start_date)
+      range_end_date = DateTime.to_date(end_date)
+
+      start_comparison = Date.compare(booking_date, range_start_date)
+      end_comparison = Date.compare(booking_date, range_end_date)
+
+      start_comparison != :lt and end_comparison != :gt
+    end)
   end
 
   defp group_bookings_by_date(bookings) do
     bookings
     |> Enum.group_by(fn booking ->
-      # Convert to Berlin time for grouping
       booking.start_datetime_utc
       |> DatetimeHelper.to_berlin()
       |> DateTime.to_date()

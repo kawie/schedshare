@@ -9,7 +9,6 @@ defmodule SchedshareWeb.ProfileLive do
     if socket.assigns[:current_user] do
       user = Accounts.get_user!(user_id)
       friends = Accounts.get_friends(user.id)
-      pending_requests = Accounts.get_pending_friend_requests(user.id)
 
       # Check if current user has a pending friend request or is already friends
       friendship = Accounts.get_friendship(socket.assigns.current_user.id, user.id)
@@ -55,7 +54,6 @@ defmodule SchedshareWeb.ProfileLive do
          page_title: "#{user.name || user.email} - Profile",
          user: user,
          friends: friends,
-         pending_requests: pending_requests,
          is_friend: is_friend,
          has_pending_request: has_pending_request,
          is_self: is_self,
@@ -76,7 +74,6 @@ defmodule SchedshareWeb.ProfileLive do
     if socket.assigns[:current_user] do
       user = socket.assigns.current_user
       friends = Accounts.get_friends(user.id)
-      pending_requests = Accounts.get_pending_friend_requests(user.id)
       is_admin = Accounts.is_admin?(socket.assigns.current_user)
 
       # Load own schedule and bookings
@@ -111,7 +108,6 @@ defmodule SchedshareWeb.ProfileLive do
          page_title: "My Profile",
          user: user,
          friends: friends,
-         pending_requests: pending_requests,
          is_self: true,
          is_admin: is_admin,
          schedule: schedule_with_bookings,
@@ -195,41 +191,6 @@ defmodule SchedshareWeb.ProfileLive do
         {:noreply,
          socket
          |> put_flash(:error, "Unable to remove friend")}
-    end
-  end
-
-  def handle_event("accept_request", %{"id" => friendship_id}, socket) do
-    case Accounts.accept_friendship(friendship_id) do
-      {:ok, friendship} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == friendship.id))
-        friends = [if(friendship.user1_id == socket.assigns.user.id, do: friendship.user2, else: friendship.user1) | socket.assigns.friends]
-
-        {:noreply,
-         socket
-         |> assign(pending_requests: pending_requests, friends: friends)
-         |> put_flash(:info, "Friend request accepted!")}
-
-      {:error, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Unable to accept request")}
-    end
-  end
-
-  def handle_event("reject_request", %{"id" => friendship_id}, socket) do
-    case Accounts.reject_friendship(friendship_id) do
-      {:ok, friendship} ->
-        pending_requests = Enum.reject(socket.assigns.pending_requests, &(&1.id == friendship.id))
-
-        {:noreply,
-         socket
-         |> assign(pending_requests: pending_requests)
-         |> put_flash(:info, "Friend request rejected")}
-
-      {:error, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Unable to reject request")}
     end
   end
 end

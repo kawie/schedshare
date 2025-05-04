@@ -102,6 +102,7 @@ defmodule SchedshareWeb.CoreComponents do
   attr :title, :string, default: nil
   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
+  attr :class, :string, default: "", doc: "additional CSS classes to add to the error message"
 
   slot :inner_block, doc: "the optional inner block that renders the flash message"
 
@@ -407,11 +408,12 @@ defmodule SchedshareWeb.CoreComponents do
   @doc """
   Generates a generic error message.
   """
+  attr :class, :string, default: "", doc: "additional CSS classes to add to the error message"
   slot :inner_block, required: true
 
   def error(assigns) do
     ~H"""
-    <p class="mt-3 flex gap-3 text-sm leading-6 text-status-error-light dark:text-status-error-dark">
+    <p class={["mt-3 flex gap-3 text-sm leading-6 text-status-error-light dark:text-status-error-dark", @class]}>
       <.icon name="hero-exclamation-circle-mini" class="mt-0.5 h-5 w-5 flex-none" />
       {render_slot(@inner_block)}
     </p>

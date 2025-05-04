@@ -1,5 +1,6 @@
 defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
   use SchedshareWeb, :live_component
+  alias Schedshare.Accounts
 
   def render(assigns) do
     ~H"""
@@ -32,6 +33,7 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
                 <div class="flex gap-2">
                   <button
                     phx-click="accept_request"
+                    phx-target={@myself}
                     phx-value-id={request.id}
                     class="rounded-md bg-status-successBg-light dark:bg-status-successBg-dark px-2.5 py-1.5 text-sm font-semibold text-status-success-light dark:text-status-success-dark shadow-sm hover:bg-status-successBg-light/80 dark:hover:bg-status-successBg-dark/80"
                   >
@@ -39,6 +41,7 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
                   </button>
                   <button
                     phx-click="reject_request"
+                    phx-target={@myself}
                     phx-value-id={request.id}
                     class="rounded-md bg-status-errorBg-light dark:bg-status-errorBg-dark px-2.5 py-1.5 text-sm font-semibold text-status-error-light dark:text-status-error-dark shadow-sm hover:bg-status-errorBg-light/80 dark:hover:bg-status-errorBg-dark/80"
                   >
@@ -52,5 +55,25 @@ defmodule SchedshareWeb.Live.Components.PendingRequestsComponent do
       <% end %>
     </div>
     """
+  end
+
+  def handle_event("accept_request", %{"id" => id}, socket) do
+    case Accounts.accept_friendship(id) do
+      {:ok, _friendship} ->
+        pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
+        {:noreply, assign(socket, pending_requests: pending_requests)}
+      {:error, _} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("reject_request", %{"id" => id}, socket) do
+    case Accounts.delete_friendship(id) do
+      {:ok, _} ->
+        pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
+        {:noreply, assign(socket, pending_requests: pending_requests)}
+      {:error, _} ->
+        {:noreply, socket}
+    end
   end
 end
