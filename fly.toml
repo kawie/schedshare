@@ -11,7 +11,7 @@ kill_signal = 'SIGTERM'
 
 [env]
   DATABASE_PATH = '/mnt/name/name.db'
-  PHX_HOST = 'schedshare.fly.dev'
+  PHX_HOST = 'schedshare.de'
   PORT = '8080'
 
 [[mounts]]

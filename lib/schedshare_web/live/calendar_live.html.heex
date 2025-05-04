@@ -22,8 +22,7 @@
                     <div class="flex items-start justify-between">
                       <div>
                         <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                          <%= DatetimeHelper.format_time(booking.start_datetime_utc) %> - 
-                          <%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
+                          <%= DatetimeHelper.format_time(booking.start_datetime_utc) %>–<%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
                         </p>
                         <h3 class="mt-1 text-base font-semibold text-text-primary-light dark:text-text-primary-dark">
                           <a href={"#{System.get_env("EXTERNAL_DOMAIN")}/activities?class=#{booking.course_external_id}"} target="_blank" class="hover:text-interactive-primary-light dark:hover:text-interactive-primary-dark">

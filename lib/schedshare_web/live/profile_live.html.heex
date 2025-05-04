@@ -139,11 +139,7 @@
                       <%= DatetimeHelper.format_weekday_date(booking.start_datetime_utc) %>
                     </p>
                     <p>
-                      <%= DatetimeHelper.format_time(booking.start_datetime_utc) %> - 
-                      <%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
-                    </p>
-                    <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                      ID: <%= booking.external_id %>
+                      <%= DatetimeHelper.format_time(booking.start_datetime_utc) %>–<%= DatetimeHelper.format_time(booking.end_datetime_utc) %>
                     </p>
                   </div>
                   <div class="mt-2">
@@ -155,11 +151,6 @@
                     </p>
                   </div>
                   <div class="mt-2 flex flex-wrap gap-2">
-                    <%= for type <- booking.course_types || [] do %>
-                      <span class="rounded-full bg-surface-light dark:bg-surface-dark px-2 py-1 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
-                        <%= type %>
-                      </span>
-                    <% end %>
                     <%= if booking.is_online do %>
                       <span class="rounded-full bg-surface-light dark:bg-surface-dark px-2 py-1 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Online
