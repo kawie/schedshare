@@ -386,6 +386,15 @@ defmodule Schedshare.Accounts do
   end
 
   @doc """
+  Returns a list of all users who have names set.
+  """
+  def list_users_with_names do
+    User
+    |> where([u], not is_nil(u.name))
+    |> Repo.all()
+  end
+
+  @doc """
   Creates a friendship request from one user to another.
   """
   def create_friendship(user1_id, user2_id) do
@@ -464,6 +473,41 @@ defmodule Schedshare.Accounts do
       f.user2_id == ^max(user1_id, user2_id)
     )
     |> Repo.one()
+  end
+
+  @doc """
+  Gets all friendships for a user (accepted, pending, and rejected).
+  """
+  def get_user_friendships(user_id) do
+    Friendship
+    |> where([f], f.user1_id == ^user_id or f.user2_id == ^user_id)
+    |> Repo.all()
+  end
+
+  @doc """
+  Sends a friend request from one user to another.
+  Returns {:ok, friendship} on success, or {:error, reason} on failure.
+  """
+  def send_friend_request(from_user_id, to_user_id) do
+    # Check if friendship already exists
+    case get_friendship(from_user_id, to_user_id) do
+      nil ->
+        # No existing friendship, create new request
+        create_friendship(from_user_id, to_user_id)
+
+      existing_friendship ->
+        case existing_friendship.status do
+          :accepted ->
+            {:error, :already_friends}
+          :pending ->
+            {:error, :request_already_sent}
+          :rejected ->
+            # Update rejected friendship to pending
+            existing_friendship
+            |> Friendship.changeset(%{status: :pending, requested_by_id: from_user_id})
+            |> Repo.update()
+        end
+    end
   end
 
   @doc """

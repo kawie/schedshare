@@ -39,6 +39,11 @@ config :phoenix_live_view,
 # Enable dev routes for testing admin tools
 config :schedshare, dev_routes: true
 
+# Test encryption key and schedule provider name
+# AES-128-CBC requires a 16-byte key
+config :schedshare, :api_credential_encryption_key, "1234567890123456"
+config :schedshare, :schedule_provider_name, "Test Sports Provider"
+
 # We don't want to define test databases for aliases yet.
 # We want to find existing aliases and define databases for them,
 # so explicitly disable this default unless covered by CI.

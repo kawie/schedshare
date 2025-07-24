@@ -205,6 +205,19 @@ defmodule Schedshare.Scheduling do
   end
 
   @doc """
+  Deletes an API credential for a user.
+  """
+  def delete_api_credential(user_id) do
+    case get_user_api_credential(user_id) do
+      nil ->
+        {:error, :not_found}
+
+      credential ->
+        Repo.delete(credential)
+    end
+  end
+
+  @doc """
   Syncs bookings from the API response.
   Updates existing bookings if they have the same external_id, creates new ones if they don't exist.
   Marks bookings as DELETED if they're no longer returned by the API.

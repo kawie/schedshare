@@ -80,3 +80,13 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Development encryption key (not for production use)
+# AES-128-CBC requires a 16-byte key
+config :schedshare, :api_credential_encryption_key,
+System.get_env("API_CREDENTIAL_ENCRYPTION_KEY") ||
+  "1234567890123456"
+
+# Development schedule provider name
+config :schedshare, :schedule_provider_name,
+System.get_env("SCHEDULE_PROVIDER_NAME") || "Your Sports Provider"

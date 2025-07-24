@@ -3,6 +3,7 @@ defmodule SchedshareWeb.ProfileLiveTest do
 
   import Phoenix.LiveViewTest
   alias Schedshare.{Accounts, Scheduling}
+  import Schedshare.AccountsFixtures
 
   @valid_user_attrs %{email: "test@example.com", password: "hello world!"}
   @other_user_attrs %{email: "other@example.com", password: "hello world!"}

@@ -1,9 +1,14 @@
 import Config
 
-# Configures api credential encryption key
-config :schedshare, :api_credential_encryption_key,
-  System.get_env("API_CREDENTIAL_ENCRYPTION_KEY") ||
-    raise "API_CREDENTIAL_ENCRYPTION_KEY not set"
+# Configures api credential encryption key and schedule provider name (only required in production)
+if config_env() == :prod do
+  config :schedshare, :api_credential_encryption_key,
+    System.get_env("API_CREDENTIAL_ENCRYPTION_KEY") ||
+      raise "API_CREDENTIAL_ENCRYPTION_KEY not set"
+
+  config :schedshare, :schedule_provider_name,
+    System.get_env("SCHEDULE_PROVIDER_NAME") || "Your Sports Provider"
+end
 
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the

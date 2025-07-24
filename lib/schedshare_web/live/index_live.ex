@@ -6,11 +6,14 @@ defmodule SchedshareWeb.IndexLive do
   alias SchedshareWeb.Live.Components.RecentBookingsComponent
   alias SchedshareWeb.Live.Components.AdminUsersComponent
   alias SchedshareWeb.Live.Components.WelcomeSectionComponent
+  alias SchedshareWeb.Live.Components.OnboardingComponent
+  alias SchedshareWeb.Live.Components.PeopleYouMightKnowComponent
 
   def mount(_params, _session, socket) do
     if socket.assigns[:current_user] do
       pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
       recent_bookings = Scheduling.list_recent_friend_bookings(socket.assigns.current_user.id)
+      api_credential = Scheduling.get_user_api_credential(socket.assigns.current_user.id)
       users =
         if Accounts.is_admin?(socket.assigns.current_user) do
           Accounts.list_users()
@@ -25,9 +28,40 @@ defmodule SchedshareWeb.IndexLive do
         else
           []
         end
-      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings)}
+      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings, api_credential: api_credential)}
     else
       {:ok, assign(socket, page_title: "SchedShare")}
+    end
+  end
+
+  def handle_info({:name_saved, updated_user}, socket) do
+    if socket.assigns.current_user.id == updated_user.id do
+      {:noreply, assign(socket, current_user: updated_user)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:credentials_saved, user_id}, socket) do
+    if socket.assigns.current_user.id == user_id do
+      api_credential = Scheduling.get_user_api_credential(user_id)
+
+      # Trigger first sync after credentials are saved
+      case Schedshare.Scheduling.Sync.sync_user_schedule(user_id) do
+        {:ok, updated_credential} ->
+          {:noreply,
+           socket
+           |> assign(api_credential: updated_credential)
+           |> put_flash(:info, "Account connected successfully! Your schedule is being synced.")}
+
+        {:error, error} ->
+          {:noreply,
+           socket
+           |> assign(api_credential: api_credential)
+           |> put_flash(:error, "Account connected but failed to sync schedule: #{error}")}
+      end
+    else
+      {:noreply, socket}
     end
   end
 
@@ -42,27 +76,35 @@ defmodule SchedshareWeb.IndexLive do
                 Welcome back, <%= @current_user.name || @current_user.email %>!
               </h2>
 
-              <div class="mt-4 flex flex-col gap-4">
-                <.link
-                  navigate={~p"/profile"}
-                  class="text-sm font-semibold leading-6 text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80"
-                >
-                  View my schedule →
-                </.link>
+              <%= if is_nil(@api_credential) do %>
+                <.live_component
+                  module={OnboardingComponent}
+                  id="onboarding"
+                  current_user={@current_user}
+                />
+              <% else %>
+                <div class="mt-4 flex flex-col gap-4">
+                  <.link
+                    navigate={~p"/profile"}
+                    class="text-sm font-semibold leading-6 text-interactive-primary-light dark:text-interactive-primary-dark hover:text-interactive-primary-light/80 dark:hover:text-interactive-primary-dark/80"
+                  >
+                    View my schedule →
+                  </.link>
 
-                <.link
-                  navigate={~p"/calendar"}
-                  class="text-sm font-semibold leading-6 text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
-                >
-                  View calendar →
-                </.link>
+                  <.link
+                    navigate={~p"/calendar"}
+                    class="text-sm font-semibold leading-6 text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
+                  >
+                    View calendar →
+                  </.link>
 
-                <.link
-                  navigate={~p"/users/settings"}
-                  class="text-sm font-semibold leading-6 text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
-                >
-                  Settings →
-                </.link>
+                  <.link
+                    navigate={~p"/users/settings"}
+                    class="text-sm font-semibold leading-6 text-interactive-light dark:text-interactive-dark hover:text-interactive-light/80 dark:hover:text-interactive-dark/80"
+                  >
+                    Settings →
+                  </.link>
+                </div>
 
                 <.live_component
                   module={PendingRequestsComponent}
@@ -75,6 +117,12 @@ defmodule SchedshareWeb.IndexLive do
                   module={RecentBookingsComponent}
                   id="recent-bookings"
                   recent_bookings={@recent_bookings}
+                />
+
+                <.live_component
+                  module={PeopleYouMightKnowComponent}
+                  id="people-you-might-know"
+                  current_user={@current_user}
                 />
 
                 <div class="mt-4 flex flex-col gap-4">
@@ -120,7 +168,7 @@ defmodule SchedshareWeb.IndexLive do
                     Log out →
                   </.link>
                 </div>
-              </div>
+              <% end %>
             </div>
           <% else %>
             <.live_component

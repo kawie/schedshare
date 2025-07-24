@@ -86,7 +86,7 @@ defmodule SchedshareWeb.UserSettingsLive do
         <.header>
           <span class="text-text-primary-light dark:text-text-primary-dark">API Credentials</span>
           <:subtitle>
-            <span class="text-text-secondary-light dark:text-text-secondary-dark">Connect your account to schedule providers</span>
+            <span class="text-text-secondary-light dark:text-text-secondary-dark">Connect your account to <%= @schedule_provider_name %></span>
           </:subtitle>
         </.header>
 
@@ -110,6 +110,9 @@ defmodule SchedshareWeb.UserSettingsLive do
               </.button>
               <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
                 <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
+              </.button>
+              <.button type="button" phx-click="delete_credentials" disabled={!@has_credentials} class="bg-status-error-light dark:bg-status-error-dark text-white hover:bg-status-error-light/80 dark:hover:bg-status-error-dark/80">
+                <.icon name="hero-trash" class="w-4 h-4 mr-1" /> Delete Credentials
               </.button>
             </div>
           </.form>
@@ -235,6 +238,9 @@ defmodule SchedshareWeb.UserSettingsLive do
     api_credential_changeset = Scheduling.change_api_credential(api_credential || %ApiCredential{})
     has_credentials = not is_nil(api_credential)
 
+    # Get schedule provider name
+    schedule_provider_name = Application.get_env(:schedshare, :schedule_provider_name, "Your Sports Provider")
+
     socket =
       socket
       |> assign(:current_password, nil)
@@ -246,6 +252,7 @@ defmodule SchedshareWeb.UserSettingsLive do
       |> assign(:api_credential, api_credential)
       |> assign(:api_credential_changeset, api_credential_changeset)
       |> assign(:has_credentials, has_credentials)
+      |> assign(:schedule_provider_name, schedule_provider_name)
       |> assign(:trigger_submit, false)
       |> allow_upload(:profile_picture,
         accept: ~w(.jpg .jpeg .png .gif),
@@ -355,6 +362,25 @@ defmodule SchedshareWeb.UserSettingsLive do
         {:noreply,
          socket
          |> put_flash(:error, "Failed to sync schedule: #{error}")}
+    end
+  end
+
+  def handle_event("delete_credentials", _, socket) do
+    case Scheduling.delete_api_credential(socket.assigns.current_user.id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(
+           api_credential: nil,
+           api_credential_changeset: Scheduling.change_api_credential(%ApiCredential{}),
+           has_credentials: false
+         )
+         |> put_flash(:info, "API credentials deleted successfully")}
+
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete API credentials")}
     end
   end
 

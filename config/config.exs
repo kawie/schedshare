@@ -9,7 +9,8 @@ import Config
 
 config :schedshare,
   ecto_repos: [Schedshare.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  schedule_provider_name: "Your Sports Provider"
 
 # Configures the endpoint
 config :schedshare, SchedshareWeb.Endpoint,
