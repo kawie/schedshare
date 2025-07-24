@@ -9,7 +9,7 @@ config :bcrypt_elixir, :log_rounds, 1
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :schedshare, Schedshare.Repo,
-  database: Path.expand("../schedshare_test.db", __DIR__),
+  database: Path.expand("../priv/repo/test.db", __DIR__),
   pool_size: 5,
   pool: Ecto.Adapters.SQL.Sandbox
 
@@ -38,3 +38,10 @@ config :phoenix_live_view,
 
 # Enable dev routes for testing admin tools
 config :schedshare, dev_routes: true
+
+# We don't want to define test databases for aliases yet.
+# We want to find existing aliases and define databases for them,
+# so explicitly disable this default unless covered by CI.
+if System.get_env("CI") do
+  config :schedshare, ecto_repos: [Schedshare.Repo]
+end
