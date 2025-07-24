@@ -61,11 +61,6 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# Configures api credential encryption key
-config :schedshare, :api_credential_encryption_key,
-  System.get_env("API_CREDENTIAL_ENCRYPTION_KEY") ||
-    raise "API_CREDENTIAL_ENCRYPTION_KEY not set"
-
 # Configures Error Tracker
 config :error_tracker,
   repo: Schedshare.Repo,
