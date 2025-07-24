@@ -96,7 +96,12 @@ defmodule SchedshareWeb.UserSettingsLive do
               <.input field={f[:username]} type="text" label="Username" />
             </div>
             <div>
-              <.input field={f[:password]} type="password" label="Password" />
+              <.input
+                field={f[:plaintext_password]}
+                type="password"
+                label="Password"
+                placeholder={if @has_credentials, do: "••••••••", else: ""}
+              />
             </div>
             <div class="flex items-center gap-4">
               <.button type="submit" class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Credentials</.button>
@@ -252,7 +257,10 @@ defmodule SchedshareWeb.UserSettingsLive do
   end
 
   def handle_event("save_credentials", %{"api_credential" => credential_params}, socket) do
-    case HTTPClient.authenticate(credential_params["username"], credential_params["password"]) do
+    # Encrypt the plaintext password for API authentication
+    encrypted_password = Schedshare.Crypto.encrypt(credential_params["plaintext_password"])
+
+    case HTTPClient.authenticate(credential_params["username"], encrypted_password) do
       {:ok, %Tesla.Env{status: 200, body: %{"data" => %{"access_token" => access_token, "refresh_token" => refresh_token, "expires_in" => expires_in}}}} ->
         # Calculate token expiry time
         expires_at = DateTime.add(DateTime.utc_now(), expires_in, :second)
