@@ -321,6 +321,31 @@ defmodule Schedshare.Scheduling do
   end
 
   @doc """
+  Returns a list of upcoming bookings for a user.
+  """
+  def get_upcoming_bookings_for_user(user_id) do
+    Booking
+    |> where([b], b.user_id == ^user_id)
+    |> where([b], b.status != "DELETED")
+    |> where([b], b.start_datetime_utc >= ^DateTime.utc_now())
+    |> order_by([b], asc: b.start_datetime_utc)
+    |> Repo.all()
+    |> Repo.preload([:schedule])
+  end
+
+  @doc """
+  Returns a list of friends that are going to the same booking.
+  """
+  def get_friends_going_together(booking_id, user_id) do
+    Booking
+    |> where([b], b.id == ^booking_id)
+    |> join(:inner, [b], s in Schedule, s.id == b.schedule_id)
+    |> join(:inner, [b, s], f in "friendships", f.user_id == ^user_id and f.friend_id == s.user_id)
+    |> select([b, s, f], s.user)
+    |> Repo.all()
+  end
+
+  @doc """
   Returns a list of recent bookings from users that the current user is friends with.
   Only returns the 10 most recent bookings that are not deleted or cancelled.
   """

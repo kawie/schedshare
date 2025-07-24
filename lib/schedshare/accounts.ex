@@ -46,6 +46,23 @@ defmodule Schedshare.Accounts do
   end
 
   @doc """
+  Gets a single user by ID and calendar token.
+
+Returns {:ok, user} if the user exists and token matches, {:error, :not_found} otherwise.
+"""
+def get_user_by_id_and_token(user_id, token) do
+  case Repo.get(User, user_id) do
+    nil -> {:error, :not_found}
+    user ->
+      if user.calendar_token == token do
+        {:ok, user}
+      else
+        {:error, :invalid_token}
+      end
+  end
+end
+
+  @doc """
   Gets a single user.
 
   Raises `Ecto.NoResultsError` if the User does not exist.

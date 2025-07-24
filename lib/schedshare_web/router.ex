@@ -34,6 +34,8 @@ defmodule SchedshareWeb.Router do
       live "/", IndexLive, :index
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
+      get "/profile/:user_id/calendar.ics", CalendarController, :calendar_ics
+      get "/bookings/:id", BookingController, :show
     end
 
     delete "/users/log_out", UserSessionController, :delete

@@ -63,7 +63,8 @@ defmodule SchedshareWeb.ProfileLive do
          api_credential: api_credential,
          api_credential_changeset: api_credential_changeset,
          has_credentials: has_credentials,
-         last_sync: last_sync
+         last_sync: last_sync,
+         calendar_url: "/profile/#{user.id}/calendar.ics?token=#{user.calendar_token}"
        )}
     else
       {:ok, redirect(socket, to: ~p"/users/log_in")}
