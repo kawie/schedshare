@@ -91,9 +91,9 @@ defmodule SchedshareWeb.UserSettingsLive do
         </.header>
 
         <div class="mt-6">
-          <.form :let={f} for={@api_credential_changeset} phx-submit="save_credentials" class="space-y-4">
+          <.form :let={f} for={@api_credential_changeset} phx-submit="save_credentials" class="space-y-4" autocomplete="off">
             <div>
-              <.input field={f[:username]} type="text" label="Username" />
+              <.input field={f[:username]} type="text" label="Username" autocomplete="off" />
             </div>
             <div>
               <.input
@@ -101,19 +101,41 @@ defmodule SchedshareWeb.UserSettingsLive do
                 type="password"
                 label="Password"
                 placeholder={if @has_credentials, do: "••••••••", else: ""}
+                autocomplete="off"
               />
             </div>
-            <div class="flex items-center gap-4">
-              <.button type="submit" class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80">Save Credentials</.button>
-              <.button type="button" phx-click="test_connection" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
-                Test Connection
-              </.button>
-              <.button type="button" phx-click="sync_schedule" disabled={!@has_credentials} class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80">
-                <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
-              </.button>
-              <.button type="button" phx-click="delete_credentials" disabled={!@has_credentials} class="bg-status-error-light dark:bg-status-error-dark text-white hover:bg-status-error-light/80 dark:hover:bg-status-error-dark/80">
-                <.icon name="hero-trash" class="w-4 h-4 mr-1" /> Delete Credentials
-              </.button>
+            <div class="flex flex-wrap items-center gap-4 sm:flex-nowrap">
+              <div class="flex flex-1 flex-col gap-4 sm:flex-row">
+                <.button type="submit" class="bg-interactive-primary-light dark:bg-interactive-primary-dark text-white hover:bg-interactive-primary-light/80 dark:hover:bg-interactive-primary-dark/80 w-full sm:w-auto">
+                  Save Credentials
+                </.button>
+                <.button
+                  type="button"
+                  phx-click="test_connection"
+                  disabled={!@has_credentials}
+                  class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80 w-full sm:w-auto"
+                >
+                  Test Connection
+                </.button>
+              </div>
+              <div class="flex flex-1 flex-col gap-4 sm:flex-row">
+                <.button
+                  type="button"
+                  phx-click="sync_schedule"
+                  disabled={!@has_credentials}
+                  class="bg-surface-light dark:bg-surface-dark text-interactive-secondary-light dark:text-interactive-secondary-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80 w-full sm:w-auto"
+                >
+                  <.icon name="hero-arrow-path" class="w-4 h-4 mr-1" /> Sync Schedule
+                </.button>
+                <.button
+                  type="button"
+                  phx-click="delete_credentials"
+                  disabled={!@has_credentials}
+                  class="bg-status-error-light dark:bg-status-error-dark text-white hover:bg-status-error-light/80 dark:hover:bg-status-error-dark/80 w-full sm:w-auto"
+                >
+                  <.icon name="hero-trash" class="w-4 h-4 mr-1" /> Delete Credentials
+                </.button>
+              </div>
             </div>
           </.form>
 

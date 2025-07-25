@@ -38,7 +38,7 @@ defmodule SchedshareWeb.Live.Components.OnboardingComponent do
             <div class="flex items-center justify-between pt-4">
               <.button
                 type="submit"
-                class="w-full"
+                class="w-full bg-interactive-primary-light dark:bg-interactive-primary-dark"
                 phx-disable-with="Saving..."
               >
                 Continue
@@ -77,7 +77,7 @@ defmodule SchedshareWeb.Live.Components.OnboardingComponent do
                 field={@form[:username]}
                 type="text"
                 label="Username"
-                placeholder="Enter your username"
+                placeholder={"Enter your #{@schedule_provider_name} username"}
                 required
               />
             </div>
@@ -87,7 +87,7 @@ defmodule SchedshareWeb.Live.Components.OnboardingComponent do
                 field={@form[:plaintext_password]}
                 type="password"
                 label="Password"
-                placeholder="Enter your password"
+                placeholder={"Enter your #{@schedule_provider_name} password"}
                 required
               />
             </div>
@@ -95,7 +95,7 @@ defmodule SchedshareWeb.Live.Components.OnboardingComponent do
             <div class="flex items-center justify-between pt-4">
               <.button
                 type="submit"
-                class="w-full"
+                class="w-full bg-interactive-primary-light dark:bg-interactive-primary-dark"
                 phx-disable-with="Connecting..."
               >
                 Connect Account

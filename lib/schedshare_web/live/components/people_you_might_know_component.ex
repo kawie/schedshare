@@ -18,7 +18,10 @@ defmodule SchedshareWeb.Live.Components.PeopleYouMightKnowComponent do
         <div class="space-y-4">
           <%= for user <- @suggested_users do %>
             <div class="flex items-center justify-between p-4 border border-border-light dark:border-border-dark rounded-lg">
-              <div class="flex items-center space-x-3">
+              <.link
+                navigate={~p"/profile/#{user.id}"}
+                class="flex items-center space-x-3 hover:bg-surface-light/60 dark:hover:bg-surface-dark/60 rounded-lg px-1 py-1 transition-colors"
+              >
                 <%= if user.profile_picture do %>
                   <img src={user.profile_picture} alt="" class="h-10 w-10 rounded-full object-cover" />
                 <% else %>
@@ -31,7 +34,7 @@ defmodule SchedshareWeb.Live.Components.PeopleYouMightKnowComponent do
                     <%= user.name %>
                   </p>
                 </div>
-              </div>
+              </.link>
 
               <button
                 type="button"

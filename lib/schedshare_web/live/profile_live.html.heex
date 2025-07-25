@@ -1,6 +1,6 @@
 <div class="mx-auto max-w-2xl py-16 px-4 sm:px-6 lg:px-8">
   <div class="space-y-8">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="flex items-center gap-4">
         <%= if @user.profile_picture do %>
           <img src={@user.profile_picture} alt={@user.name || @user.email} class="h-16 w-16 rounded-full" />

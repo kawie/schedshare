@@ -114,15 +114,15 @@ defmodule SchedshareWeb.IndexLive do
                 />
 
                 <.live_component
-                  module={RecentBookingsComponent}
-                  id="recent-bookings"
-                  recent_bookings={@recent_bookings}
-                />
-
-                <.live_component
                   module={PeopleYouMightKnowComponent}
                   id="people-you-might-know"
                   current_user={@current_user}
+                />
+
+                <.live_component
+                  module={RecentBookingsComponent}
+                  id="recent-bookings"
+                  recent_bookings={@recent_bookings}
                 />
 
                 <div class="mt-4 flex flex-col gap-4">
