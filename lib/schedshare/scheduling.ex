@@ -289,6 +289,93 @@ defmodule Schedshare.Scheduling do
   end
 
   @doc """
+  Syncs waitlist items from the API response.
+  Updates existing waitlist items if they have the same course_external_id, creates new ones if they don't exist.
+  Marks waitlist items as DELETED if they're no longer in the waitlist.
+  """
+  def sync_waitlist_items(user_id, waitlist_items) do
+    # Get or create schedule for user
+    schedule =
+      case list_user_schedules(user_id) do
+        [schedule] -> schedule
+        _ -> {:ok, schedule} = create_schedule(%{user_id: user_id})
+             schedule
+      end
+
+    # Get existing waitlist items by course_external_id for this schedule
+    existing_waitlist_items =
+      Booking
+      |> where([b], b.schedule_id == ^schedule.id and b.status == "WAITLISTED")
+      |> Repo.all()
+      |> Map.new(&{&1.course_external_id, &1})
+
+    # Get list of course_external_ids from API response
+    api_course_ids = Enum.map(waitlist_items, & &1["course_external_id"]) |> MapSet.new()
+
+    # Mark waitlist items as DELETED if they're no longer in the waitlist
+    existing_waitlist_items
+    |> Enum.filter(fn {course_id, _} -> not MapSet.member?(api_course_ids, course_id) end)
+    |> Enum.each(fn {_, booking} ->
+      update_booking(booking, %{status: "DELETED"})
+    end)
+
+    # Convert API waitlist items to our format and sync them
+    waitlist_items
+    |> Enum.map(fn item ->
+      # Parse the datetime with timezone info
+      {:ok, start_datetime, _} = DateTime.from_iso8601(item["start_time"])
+      {:ok, end_datetime, _} = DateTime.from_iso8601(item["end_time"])
+
+      %{
+        schedule_id: schedule.id,
+        external_id: item["id"],
+        course_external_id: item["course_external_id"],
+        status: "WAITLISTED",
+        course_title: item["title"],
+        start_datetime_utc: start_datetime,
+        end_datetime_utc: end_datetime,
+        venue_name: item["location"],
+        teacher_name: item["teacher_name"],
+        course_types: item["course_types"] || [],
+        is_online: item["is_online"] || false
+      }
+    end)
+    |> Enum.reduce_while({:ok, []}, fn booking_attrs, {:ok, acc} ->
+      case Map.get(existing_waitlist_items, booking_attrs.course_external_id) do
+        nil ->
+          # Check if there's already a booking with this external_id (might be a confirmed booking)
+          existing_booking_with_external_id =
+            Booking
+            |> where([b], b.schedule_id == ^schedule.id and b.external_id == ^booking_attrs.external_id)
+            |> Repo.one()
+
+          case existing_booking_with_external_id do
+            nil ->
+              # Create new waitlist item if it doesn't exist
+              case create_booking(booking_attrs) do
+                {:ok, booking} -> {:cont, {:ok, [booking | acc]}}
+                {:error, _} -> {:halt, {:error, "Failed to create waitlist item"}}
+              end
+
+            existing_booking ->
+              # Update existing booking to waitlisted status
+              case update_booking(existing_booking, booking_attrs) do
+                {:ok, booking} -> {:cont, {:ok, [booking | acc]}}
+                {:error, _} -> {:halt, {:error, "Failed to update booking to waitlisted"}}
+              end
+          end
+
+        existing_waitlist_booking ->
+          # Update existing waitlist item
+          case update_booking(existing_waitlist_booking, booking_attrs) do
+            {:ok, booking} -> {:cont, {:ok, [booking | acc]}}
+            {:error, _} -> {:halt, {:error, "Failed to update waitlist item"}}
+          end
+      end
+    end)
+  end
+
+  @doc """
   Returns a list of API credentials that need syncing for a user and their friends.
   A credential needs syncing if:
   1. It has a valid access token

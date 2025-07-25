@@ -58,6 +58,7 @@ defmodule Schedshare.Scheduling.Sync do
   Returns {:ok, credential} on success or {:error, reason} on failure.
   """
   def sync_with_credential(%ApiCredential{} = credential) do
+    # First, fetch regular bookings
     case HTTPClient.fetch_schedule(credential.access_token) do
       {:ok, %Tesla.Env{status: 200} = response} ->
         Logger.debug("Got 200 response from API: #{inspect(response.body)}")
@@ -80,35 +81,118 @@ defmodule Schedshare.Scheduling.Sync do
               }
             end)
 
-            case Schedshare.Scheduling.sync_bookings(credential.user_id, formatted_bookings) do
-              {:ok, _} ->
-                # Update last sync time and clear any error state
-                case Schedshare.Scheduling.update_api_credential(credential, %{
-                  last_sync_at: DateTime.utc_now(),
-                  connection_status: "connected",
-                  connection_error: nil
-                }) do
-                  {:ok, updated_credential} -> {:ok, updated_credential}
-                  {:error, error} -> {:error, "Failed to update credential after sync: #{error}"}
-                end
+                        # Now fetch waitlist items
+            case fetch_and_format_waitlist(credential.access_token) do
+              {:ok, formatted_waitlist} ->
+                # Sync regular bookings first
+                case Schedshare.Scheduling.sync_bookings(credential.user_id, formatted_bookings) do
+                  {:ok, _} ->
+                    # Then sync waitlist items
+                    case Schedshare.Scheduling.sync_waitlist_items(credential.user_id, formatted_waitlist) do
+                  {:ok, _} ->
+                    # Update last sync time and clear any error state
+                    case Schedshare.Scheduling.update_api_credential(credential, %{
+                      last_sync_at: DateTime.utc_now(),
+                      connection_status: "connected",
+                      connection_error: nil
+                    }) do
+                      {:ok, updated_credential} -> {:ok, updated_credential}
+                      {:error, error} -> {:error, "Failed to update credential after sync: #{error}"}
+                    end
 
-              {:error, error} ->
-                error_message = "Failed to sync bookings: #{error}"
-                Schedshare.Scheduling.update_api_credential(credential, %{
-                  connection_status: "error",
-                  connection_error: error_message
-                })
-                {:error, error_message}
-            end
+                  {:error, error} ->
+                    error_message = "Failed to sync bookings: #{error}"
+                    Schedshare.Scheduling.update_api_credential(credential, %{
+                      connection_status: "error",
+                      connection_error: error_message
+                    })
+                                         {:error, error_message}
+                   end
 
-          _ ->
-            error_message = "Unexpected API response structure: #{inspect(response.body)}"
-            Schedshare.Scheduling.update_api_credential(credential, %{
-              connection_status: "error",
-              connection_error: error_message
-            })
-            {:error, error_message}
-        end
+                 {:error, waitlist_error} ->
+                   error_message = "Failed to fetch waitlist: #{waitlist_error}"
+                   Schedshare.Scheduling.update_api_credential(credential, %{
+                     connection_status: "error",
+                     connection_error: error_message
+                   })
+                   {:error, error_message}
+               end
+
+             _ ->
+               error_message = "Unexpected API response structure: #{inspect(response.body)}"
+               Schedshare.Scheduling.update_api_credential(credential, %{
+                 connection_status: "error",
+                 connection_error: error_message
+               })
+               {:error, error_message}
+           end
+
+         {:ok, %Tesla.Env{status: 401}} ->
+           # Token expired, try to refresh it
+           case HTTPClient.refresh_token(credential.refresh_token) do
+             {:ok, %Tesla.Env{status: 200, body: %{"data" => %{"access_token" => access_token, "refresh_token" => refresh_token, "expires_in" => expires_in}}}} ->
+               expires_at = DateTime.add(DateTime.utc_now(), expires_in, :second)
+
+               # Update credential with new tokens
+               case Schedshare.Scheduling.update_api_credential(credential, %{
+                 access_token: access_token,
+                 refresh_token: refresh_token,
+                 token_expires_at: expires_at
+               }) do
+                 {:ok, updated_credential} ->
+                   # Retry sync with new token
+                   sync_with_credential(updated_credential)
+
+                 {:error, error} ->
+                   error_message = "Failed to update credential with new tokens: #{error}"
+                   Schedshare.Scheduling.update_api_credential(credential, %{
+                     connection_status: "error",
+                     connection_error: error_message
+                   })
+                   {:error, error_message}
+               end
+
+             {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
+               error_message = "Failed to refresh token: #{error}"
+               Schedshare.Scheduling.update_api_credential(credential, %{
+                 connection_status: "error",
+                 connection_error: error_message
+               })
+               {:error, error_message}
+
+             {:error, error} ->
+               error_message = "Failed to refresh token: #{error}"
+               Schedshare.Scheduling.update_api_credential(credential, %{
+                 connection_status: "error",
+                 connection_error: error_message
+               })
+               {:error, error_message}
+           end
+
+         {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
+           error_message = "API returned error: #{error}"
+           Schedshare.Scheduling.update_api_credential(credential, %{
+             connection_status: "error",
+             connection_error: error_message
+           })
+           {:error, error_message}
+
+         {:ok, %Tesla.Env{status: status}} ->
+           error_message = "API returned status #{status}"
+           Schedshare.Scheduling.update_api_credential(credential, %{
+             connection_status: "error",
+             connection_error: error_message
+           })
+           {:error, error_message}
+
+         {:error, error} ->
+           error_message = "Failed to fetch schedule: #{inspect(error)}"
+           Schedshare.Scheduling.update_api_credential(credential, %{
+             connection_status: "error",
+             connection_error: error_message
+           })
+           {:error, error_message}
+       end
 
       {:ok, %Tesla.Env{status: 401}} ->
         # Token expired, try to refresh it
@@ -175,6 +259,73 @@ defmodule Schedshare.Scheduling.Sync do
           connection_error: error_message
         })
         {:error, error_message}
+    end
+  end
+
+  @doc """
+  Fetches waitlist data and formats it to match booking format.
+  Returns {:ok, formatted_waitlist} on success or {:error, reason} on failure.
+  """
+  defp fetch_and_format_waitlist(access_token) do
+    case HTTPClient.fetch_waitlist(access_token) do
+      {:ok, %Tesla.Env{status: 200} = response} ->
+        case response.body do
+          %{"success" => "true", "data" => course_ids} when is_list(course_ids) ->
+            # Fetch course details for waitlisted courses
+            case HTTPClient.fetch_course_details(access_token, course_ids) do
+              {:ok, %Tesla.Env{status: 200} = course_response} ->
+                case course_response.body do
+                  %{"success" => "true", "data" => %{"classes" => classes}} ->
+                    # Transform waitlist classes to match booking format
+                    formatted_waitlist = Enum.map(classes, fn class ->
+                      %{
+                        "id" => class["id"], # Use the course ID as external_id
+                        "status" => "WAITLISTED",
+                        "title" => class["title"],
+                        "start_time" => class["startDateTimeUTC"],
+                        "end_time" => class["endDateTimeUTC"],
+                        "location" => class["venue"]["name"],
+                        "teacher_name" => class["teacherName"],
+                        "course_external_id" => class["id"],
+                        "course_types" => class["types"] || [],
+                        "is_online" => class["isOnline"] == 1,
+                        "is_waitlist" => true
+                      }
+                    end)
+                    {:ok, formatted_waitlist}
+
+                  _ ->
+                    {:error, "Unexpected course details response structure: #{inspect(course_response.body)}"}
+                end
+
+              {:ok, %Tesla.Env{status: 401}} ->
+                {:error, "Unauthorized when fetching course details"}
+
+              {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
+                {:error, "Course details API error: #{error}"}
+
+              {:ok, %Tesla.Env{status: status}} ->
+                {:error, "Course details API returned status #{status}"}
+
+              {:error, error} ->
+                {:error, "Failed to fetch course details: #{inspect(error)}"}
+            end
+
+          _ ->
+            {:error, "Unexpected waitlist response structure: #{inspect(response.body)}"}
+        end
+
+      {:ok, %Tesla.Env{status: 401}} ->
+        {:error, "Unauthorized when fetching waitlist"}
+
+      {:ok, %Tesla.Env{body: %{"error_description" => error}}} ->
+        {:error, "Waitlist API error: #{error}"}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "Waitlist API returned status #{status}"}
+
+      {:error, error} ->
+        {:error, "Failed to fetch waitlist: #{inspect(error)}"}
     end
   end
 end

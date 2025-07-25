@@ -150,6 +150,83 @@ defmodule Schedshare.Scheduling.HTTPClient do
     end
   end
 
+  @doc """
+  Fetches the user's waitlist from the API.
+  Returns {:ok, response} with the waitlist data on success.
+  """
+  def fetch_waitlist(access_token) do
+    Logger.debug("Fetching waitlist with access token")
+
+    if mock?() do
+      Logger.debug("Using mock waitlist fetching")
+      mock_fetch_waitlist(access_token)
+    else
+      Logger.debug("Making real API waitlist request")
+      try do
+        response = get("/api/v6/customers/waitlist", headers: [{"authorization", "Bearer #{access_token}"}])
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise RuntimeError, message: "Waitlist fetch failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Waitlist fetch request failed: #{inspect(reason)}"
+        end
+      rescue
+        e in RuntimeError ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, e}
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, RuntimeError.exception(message: "Unexpected error: #{inspect(e)}")}
+      end
+    end
+  end
+
+  @doc """
+  Fetches course details for given course IDs from the API.
+  Returns {:ok, response} with the course details on success.
+  """
+  def fetch_course_details(access_token, course_ids) when is_list(course_ids) and length(course_ids) > 0 do
+    Logger.debug("Fetching course details for course IDs: #{inspect(course_ids)}")
+
+    if mock?() do
+      Logger.debug("Using mock course details fetching")
+      mock_fetch_course_details(access_token, course_ids)
+    else
+      Logger.debug("Making real API course details request")
+      try do
+        # Build query parameters for course IDs
+        query_params = course_ids
+        |> Enum.map(fn id -> "ids%5B%5D=#{id}" end)
+        |> Enum.join("&")
+        |> Kernel.<>("&forDurationOfDays=14")
+
+        response = get("/api/v6/courses?#{query_params}", headers: [{"authorization", "Bearer #{access_token}"}])
+
+        case response do
+          {:ok, %{status: 200} = resp} -> {:ok, resp}
+          {:ok, resp} ->
+            raise RuntimeError, message: "Course details fetch failed with status #{resp.status}"
+          {:error, reason} ->
+            raise RuntimeError, message: "Course details fetch request failed: #{inspect(reason)}"
+        end
+      rescue
+        e in RuntimeError ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, e}
+        e ->
+          ErrorTracker.report(e, __STACKTRACE__, %{})
+          {:error, RuntimeError.exception(message: "Unexpected error: #{inspect(e)}")}
+      end
+    end
+  end
+
+  def fetch_course_details(_access_token, []) do
+    # Return empty result if no course IDs provided
+    {:ok, %Tesla.Env{status: 200, body: %{"success" => "true", "data" => %{"classes" => [], "classesCount" => 0, "freeTrainings" => [], "freeTrainingsCount" => 0}}}}
+  end
+
   # Private helpers
 
   defp mock?() do
@@ -276,6 +353,147 @@ defmodule Schedshare.Scheduling.HTTPClient do
 
   defp mock_get_customer_info(_token) do
     Logger.debug("Mock: Failed customer info fetch")
+
+    {:ok, %Tesla.Env{
+      status: 401,
+      body: %{
+        "error" => "invalid_token",
+        "error_description" => "The access token is invalid or has expired"
+      }
+    }}
+  end
+
+  defp mock_fetch_waitlist("mock_access_token") do
+    Logger.debug("Mock: Successful waitlist fetch")
+
+    {:ok, %Tesla.Env{
+      status: 200,
+      body: %{
+        "success" => "true",
+        "data" => [
+          92065566,
+          92065567
+        ]
+      }
+    }}
+  end
+
+  defp mock_fetch_waitlist(_token) do
+    Logger.debug("Mock: Failed waitlist fetch")
+
+    {:ok, %Tesla.Env{
+      status: 401,
+      body: %{
+        "error" => "invalid_token",
+        "error_description" => "The access token is invalid or has expired"
+      }
+    }}
+  end
+
+  defp mock_fetch_course_details("mock_access_token", course_ids) do
+    Logger.debug("Mock: Successful course details fetch for #{inspect(course_ids)}")
+
+    now = DateTime.utc_now()
+    tomorrow = DateTime.add(now, 24 * 3600, :second)
+
+    {:ok, %Tesla.Env{
+      status: 200,
+      body: %{
+        "success" => "true",
+        "data" => %{
+          "classes" => [
+            %{
+              "id" => 92065566,
+              "date" => "2025-08-02",
+              "title" => "Full Body Strength",
+              "startTime" => "11:15:00",
+              "startDateTimeUTC" => "2025-08-02T11:15:00+02:00",
+              "endTime" => "12:00:00",
+              "endDateTimeUTC" => "2025-08-02T12:00:00+02:00",
+              "venue" => %{
+                "id" => 27168,
+                "name" => "LIFTED - Studio Eberswalder",
+                "location" => %{
+                  "displayAddress" => "Berlin - Prenzlauer Berg",
+                  "city" => %{
+                    "id" => 1,
+                    "name" => "Berlin"
+                  },
+                  "district" => %{
+                    "id" => 85,
+                    "name" => "Prenzlauer Berg",
+                    "area" => "Berlin"
+                  },
+                  "latitude" => 52.542156400000003,
+                  "longitude" => 13.4126598,
+                  "postalCode" => "10437",
+                  "address" => "Schönhauser Allee 48",
+                  "country" => %{
+                    "code" => "DE"
+                  }
+                },
+                "phone" => "",
+                "website" => "https://lifted-studios.com",
+                "openingHoursText" => "Die Öffnungszeiten hängen von den Kurszeiten / vereinbarten Terminen ab oder sind nicht bekannt. Weitere Informationen findest du auf der Partner-Webseite.",
+                "bookingLimitsText" => "M & L-Mitglieder können 8 Mal pro Monat Lifted - Eberswalder besuchen.\r\n\r\nXL-Mitglieder können 1x pro Tag Lifted - Eberswalder besuchen.",
+                "importantInfo" => "++ENGLISH (German further below)++\nIf it is your 1st time at LIFTED, please be changed and ready on the training floor at least 10 minutes before class starts, as we need to give you a short intro. \n\nPlease also bring clean indoor training shoes and a towel! \nThis location has changing rooms but no showers.\n\nAll of our classes are taught in English, but a lot of trainers speak German too.\n\n++GERMAN++\nFalls du das erste Mal bei LIFTED bist, sei bitte mind. 10 Minuten vor Kursbeginn umgezogen und auf der Fläche damit wir dir ein kurzes Intro geben können.\n\nBitte denk immer daran saubere Trainingsschuhe und ein Handtuch mitzubringen. \nAn diesem Standort haben wir Umkleideräume, aber leider keine Duschen.\n\nAlle unsere Klassen sind in Englisch, aber viele TrainerInnen sprechen auch Deutsch.\n\nBuche deinen Kurs direkt über die Urban Sports Club App! Bitte beachte, dass dies eine verbindliche Buchung ist, und die Stornierungsfrist von 12 Stunden eingehalten werden muss. Dies wird dir auch bei der Buchung angezeigt. Andernfalls wird dir der Besuch von deinem monatlichen Besuchslimit abgezogen und in Rechnung gestellt. \n\nHinweis: Der Check-In Prozess über den QR Code vor Ort bleibt unverändert.",
+                "additionalInformation" => "",
+                "allowedBusinessTypes" => [
+                  "b2c",
+                  "b2b"
+                ]
+              },
+              "category" => %{
+                "id" => 233,
+                "name" => "Functional Training",
+                "icon" => "https://storage.googleapis.com/download/storage/v1/b/usc-pro-uscweb-live-media/o/categories%2FcategoryIcon_80x80_icon-category-functional-training.png?generation=1752493602308960&alt=media"
+              },
+              "extraPriceDescriptionText" => "",
+              "covers" => [
+                %{
+                  "thumbnail" => "https://storage.googleapis.com/download/storage/v1/b/usc-pro-uscweb-live-media/o/venues%2Fthumbnail_150x150_x4dq3hjub8wrsgnhsvm2_1735901084667145.png?generation=1751993139379069&alt=media",
+                  "original" => "https://storage.googleapis.com/download/storage/v1/b/usc-pro-uscweb-live-media/o/venues%2Foriginal_1200x675_x4dq3hjub8wrsgnhsvm2_1735901084667145.png?generation=1751993139337816&alt=media"
+                }
+              ],
+              "planTypes" => [
+                "M",
+                "L",
+                "XL"
+              ],
+              "planTypesB2B" => [
+                "M",
+                "L",
+                "XL"
+              ],
+              "external" => true,
+              "serviceType" => "event",
+              "bookingType" => "confirmation_required",
+              "types" => [
+                "onsite"
+              ],
+              "isOnline" => 0,
+              "isPlusCheckin" => 0,
+              "isMyClubs" => false,
+              "deleted" => 0,
+              "highlight" => 0,
+              "booking" => nil,
+              "teacherName" => "Deon C.",
+              "bookable" => 0,
+              "minimumNumber" => -1,
+              "maximumNumber" => 27,
+              "freeSpots" => 0
+            }
+          ],
+          "classesCount" => 1,
+          "freeTrainings" => [],
+          "freeTrainingsCount" => 0
+        }
+      }
+    }}
+  end
+
+  defp mock_fetch_course_details(_token, _course_ids) do
+    Logger.debug("Mock: Failed course details fetch")
 
     {:ok, %Tesla.Env{
       status: 401,

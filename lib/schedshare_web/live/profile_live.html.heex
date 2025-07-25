@@ -129,7 +129,8 @@
                     <span class={[
                       "rounded-full px-2 py-1 text-xs font-medium",
                       booking.status == "CANCELLED" && "bg-status-errorBg-light dark:bg-status-errorBg-dark text-status-error-light dark:text-status-error-dark",
-                      booking.status != "CANCELLED" && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark"
+                      booking.status == "WAITLISTED" && "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200",
+                      booking.status not in ["CANCELLED", "WAITLISTED"] && "bg-status-successBg-light dark:bg-status-successBg-dark text-status-success-light dark:text-status-success-dark"
                     ]} data-test-id={"status-#{String.downcase(booking.status)}"}>
                       <%= booking.status %>
                     </span>
