@@ -14,6 +14,7 @@ defmodule SchedshareWeb.IndexLive do
       pending_requests = Accounts.get_pending_friend_requests(socket.assigns.current_user.id)
       recent_bookings = Scheduling.list_recent_friend_bookings(socket.assigns.current_user.id)
       api_credential = Scheduling.get_user_api_credential(socket.assigns.current_user.id)
+      suggested_users = get_suggested_users(socket.assigns.current_user.id)
       users =
         if Accounts.is_admin?(socket.assigns.current_user) do
           Accounts.list_users()
@@ -28,7 +29,7 @@ defmodule SchedshareWeb.IndexLive do
         else
           []
         end
-      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings, api_credential: api_credential)}
+      {:ok, assign(socket, page_title: "SchedShare", users: users, pending_requests: pending_requests, recent_bookings: recent_bookings, api_credential: api_credential, suggested_users: suggested_users)}
     else
       {:ok, assign(socket, page_title: "SchedShare")}
     end
@@ -63,6 +64,34 @@ defmodule SchedshareWeb.IndexLive do
     else
       {:noreply, socket}
     end
+  end
+
+  defp get_suggested_users(current_user_id) do
+    # Get all users with names set
+    all_users = Accounts.list_users_with_names()
+
+    # Get users that the current user is already friends with or has pending requests with
+    excluded_user_ids = get_excluded_user_ids(current_user_id)
+
+    # Filter out excluded users and limit to 5
+    all_users
+    |> Enum.reject(fn user -> user.id == current_user_id end)
+    |> Enum.reject(fn user -> user.id in excluded_user_ids end)
+    |> Enum.take(5)
+  end
+
+  defp get_excluded_user_ids(current_user_id) do
+    # Get all friendships (accepted and pending) for the current user
+    friendships = Accounts.get_user_friendships(current_user_id)
+
+    # Extract the other user IDs from friendships
+    Enum.map(friendships, fn friendship ->
+      if friendship.user1_id == current_user_id do
+        friendship.user2_id
+      else
+        friendship.user1_id
+      end
+    end)
   end
 
   def render(assigns) do
@@ -113,11 +142,14 @@ defmodule SchedshareWeb.IndexLive do
                   current_user={@current_user}
                 />
 
-                <.live_component
-                  module={PeopleYouMightKnowComponent}
-                  id="people-you-might-know"
-                  current_user={@current_user}
-                />
+                <%= if @suggested_users != [] do %>
+                  <.live_component
+                    module={PeopleYouMightKnowComponent}
+                    id="people-you-might-know"
+                    current_user={@current_user}
+                    suggested_users={@suggested_users}
+                  />
+                <% end %>
 
                 <.live_component
                   module={RecentBookingsComponent}

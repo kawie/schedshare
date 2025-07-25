@@ -48,27 +48,13 @@ defmodule SchedshareWeb.Live.Components.PeopleYouMightKnowComponent do
             </div>
           <% end %>
         </div>
-
-        <%= if @suggested_users == [] do %>
-          <div class="text-center py-8">
-            <p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">
-              No more people to suggest at the moment.
-            </p>
-          </div>
-        <% end %>
       </div>
     </div>
     """
   end
 
   def update(assigns, socket) do
-    # Get users that the current user is not friends with and have names set
-    suggested_users = get_suggested_users(assigns.current_user.id)
-
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(:suggested_users, suggested_users)}
+    {:ok, assign(socket, assigns)}
   end
 
   def handle_event("send_friend_request", %{"user-id" => target_user_id}, socket) do
@@ -95,31 +81,5 @@ defmodule SchedshareWeb.Live.Components.PeopleYouMightKnowComponent do
     end
   end
 
-  defp get_suggested_users(current_user_id) do
-    # Get all users with names set
-    all_users = Accounts.list_users_with_names()
 
-    # Get users that the current user is already friends with or has pending requests with
-    excluded_user_ids = get_excluded_user_ids(current_user_id)
-
-    # Filter out excluded users and limit to 5
-    all_users
-    |> Enum.reject(fn user -> user.id == current_user_id end)
-    |> Enum.reject(fn user -> user.id in excluded_user_ids end)
-    |> Enum.take(5)
-  end
-
-  defp get_excluded_user_ids(current_user_id) do
-    # Get all friendships (accepted and pending) for the current user
-    friendships = Accounts.get_user_friendships(current_user_id)
-
-    # Extract the other user IDs from friendships
-    Enum.map(friendships, fn friendship ->
-      if friendship.user1_id == current_user_id do
-        friendship.user2_id
-      else
-        friendship.user1_id
-      end
-    end)
-  end
 end
