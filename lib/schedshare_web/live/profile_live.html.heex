@@ -49,7 +49,16 @@
             <% end %>
           </div>
           <%= if @is_admin do %>
-            <div>
+            <div class="flex gap-3">
+              <%= if @has_credentials do %>
+                <button
+                  type="button"
+                  phx-click="sync_schedule"
+                  class="rounded-md bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm font-semibold text-interactive-secondary-light dark:text-interactive-secondary-dark shadow-sm hover:bg-surface-light/80 dark:hover:bg-surface-dark/80 flex items-center gap-1"
+                >
+                  <.icon name="hero-arrow-path" class="w-4 h-4" /> Sync Schedule
+                </button>
+              <% end %>
               <%= if @user.is_admin do %>
                 <button 
                   phx-click="remove_admin" 

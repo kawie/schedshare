@@ -43,10 +43,10 @@ defmodule SchedshareWeb.ProfileLive do
           %{}
         end
 
-      # Load API credentials if user is self
-      api_credential = if is_self, do: Scheduling.get_user_api_credential(user.id), else: nil
+      # Load API credentials if user is self or if admin is viewing
+      api_credential = if is_self || is_admin, do: Scheduling.get_user_api_credential(user.id), else: nil
       api_credential_changeset = if is_self, do: Scheduling.change_api_credential(api_credential || %ApiCredential{}), else: nil
-      has_credentials = if is_self, do: not is_nil(api_credential), else: false
+      has_credentials = if is_self || is_admin, do: not is_nil(api_credential), else: false
       last_sync = if api_credential, do: api_credential.last_sync_at, else: nil
 
       {:ok,
@@ -191,6 +191,27 @@ defmodule SchedshareWeb.ProfileLive do
         {:noreply,
          socket
          |> put_flash(:error, "Unable to remove friend")}
+    end
+  end
+
+  def handle_event("sync_schedule", _, socket) do
+    if Accounts.is_admin?(socket.assigns.current_user) do
+      case Schedshare.Scheduling.Sync.sync_user_schedule(socket.assigns.user.id) do
+        {:ok, updated_credential} ->
+          {:noreply,
+           socket
+           |> assign(api_credential: updated_credential, last_sync: updated_credential.last_sync_at, has_credentials: true)
+           |> put_flash(:info, "Schedule synced successfully!")}
+
+        {:error, error} ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Failed to sync schedule: #{error}")}
+      end
+    else
+      {:noreply,
+       socket
+       |> put_flash(:error, "Not authorized to perform this action")}
     end
   end
 end
